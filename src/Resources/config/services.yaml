@@ -1,0 +1,44 @@
+services:
+  # default configuration for services in *this* file
+  _defaults:
+    autowire: true      # Automatically injects dependencies in your services.
+    autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  # 如果确认要使用自动扫描、自动注册，建议尽可能将要扫描的目录路径收缩，不要设置那么大的范围
+  AopBundle\:
+    resource: '../../'
+    exclude:
+      - '../../DependencyInjection/'
+      - '../../Enum/'
+      - '../../Entity/'
+      - '../../Event/'
+      - '../../Message/'
+      - '../../Model/'
+      - '../../Exception/'
+      - '../../Resources/'
+      - '../../Tests/'
+
+  sf-aop.file-locator:
+    class: ProxyManager\FileLocator\FileLocator
+    arguments: [ '%kernel.cache_dir%' ]
+  sf-aop.generator-strategy:
+    class: ProxyManager\GeneratorStrategy\FileWriterGeneratorStrategy
+    arguments: [ '@sf-aop.file-locator' ]
+  sf-aop.configuration:
+    class: ProxyManager\Configuration
+    calls:
+      - [ 'setGeneratorStrategy', [ '@sf-aop.generator-strategy' ] ]
+      - [ 'setProxiesTargetDir', [ '%kernel.cache_dir%' ] ]
+      - [ 'setProxiesNamespace', [ 'ServicePoolProxy' ] ]
+  sf-aop.proxy-manager:
+    class: ProxyManager\Factory\AccessInterceptorValueHolderFactory
+    arguments: [ '@sf-aop.configuration' ]
+
+  sf-aop.interceptor:
+    class: AopBundle\Service\AopInterceptor
+    tags: [ 'aop-interceptor' ]
+  sf-aop.closure:
+    class: Closure
+    factory: ['Closure', 'fromCallable']
+    arguments: [ '@sf-aop.interceptor' ]
+    tags: [ 'aop-closure' ]
