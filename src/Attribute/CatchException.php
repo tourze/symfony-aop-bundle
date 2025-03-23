@@ -4,13 +4,11 @@ namespace Tourze\Symfony\AOP\Attribute;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-#[\Attribute(\Attribute::TARGET_CLASS)]
-class Aspect extends AutoconfigureTag
+#[\Attribute(\Attribute::TARGET_METHOD)]
+class CatchException extends AutoconfigureTag
 {
-    const TAG_NAME = 'aop.aspect';
-
     public function __construct()
     {
-        parent::__construct(self::TAG_NAME);
+        parent::__construct('aop-catch-exception');
     }
 }

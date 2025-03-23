@@ -1,6 +1,6 @@
 <?php
 
-namespace AopBundle\Attribute;
+namespace Tourze\Symfony\AOP\Attribute;
 
 /**
  * 异常通知（AfterThrowing）：在目标方法抛出异常之后执行的通知。它通常用于在目标方法抛出异常后进行一些处理，例如记录异常日志、回滚事务等。

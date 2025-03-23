@@ -1,20 +1,39 @@
 <?php
 
-namespace AopBundle\DependencyInjection;
+namespace Tourze\Symfony\AOP\DependencyInjection\Compiler;
 
-use AopBundle\Attribute\Advice;
-use AopBundle\Attribute\Aspect;
+use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\ExpressionLanguage\ExpressionFunction;
+use Tourze\Symfony\AOP\Attribute\Advice;
+use Tourze\Symfony\AOP\Attribute\Aspect;
+use Tourze\Symfony\AOP\Service\AopInterceptor;
 
-class AttributeCompilerPass implements CompilerPassInterface
+class AopAttributeCompilerPass implements CompilerPassInterface
 {
     const INTERNAL_PREFIX = 'sf-aop.';
     const INTERNAL_SUFFIX = '.internal-for-aop';
+
+    /**
+     * 获取所有可能的类
+     */
+    protected static function getParentClasses(\ReflectionClass $reflectionClass): array
+    {
+        $rs = [
+            $reflectionClass->getName(),
+        ];
+        if ($reflectionClass->getParentClass()) {
+            $rs = array_merge($rs, static::getParentClasses($reflectionClass->getParentClass()));
+        }
+        if (!empty($reflectionClass->getInterfaceNames())) {
+            $rs = array_merge($rs, $reflectionClass->getInterfaceNames());
+        }
+        return array_values(array_unique($rs));
+    }
 
     public function process(ContainerBuilder $container): void
     {
@@ -42,6 +61,8 @@ class AttributeCompilerPass implements CompilerPassInterface
                         $statements[$instance->statement][$name][] = [$serviceId, $method->getName()];
                         // 强制修改为public，方便Interceptor去动态执行
                         $definition = $container->findDefinition($serviceId);
+                        // 减少不必要的初始化成本
+                        $definition->setLazy(true);
                         $definition->setPublic(true);
                     }
                 }
@@ -68,11 +89,29 @@ class AttributeCompilerPass implements CompilerPassInterface
             if (!empty($reflectionClass->getAttributes(Aspect::class))) {
                 continue;
             }
+
+            $definition = $container->findDefinition($serviceId);
+            $serviceTags = array_keys($definition->getTags());
+
             foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+                // 部分魔术方法，我们不处理
+                if ($method->getName() === '__construct' || $method->getName() === '__destruct' || $method->getName() === '__unserialize') {
+                    continue;
+                }
+
                 $fullName = $reflectionClass->getName() . '::' . $method->getName();
                 foreach ($statements as $statement => $config) {
+                    //dump($serviceId, $statement);
                     // 满足条件，我们开始拦截方法
-                    if ($statement !== $fullName && !$expressionLanguage->evaluate($statement, ['method' => $method])) {
+                    if (
+                        $statement !== $fullName
+                        && !$expressionLanguage->evaluate($statement, [
+                            'class' => $reflectionClass,
+                            'method' => $method,
+                            'serviceId' => $serviceId,
+                            'serviceTags' => $serviceTags,
+                            'parentClasses' => self::getParentClasses($reflectionClass),
+                        ])) {
                         continue;
                     }
 
@@ -81,21 +120,36 @@ class AttributeCompilerPass implements CompilerPassInterface
                     $aopNewService = $container->findDefinition($serviceId);
 
                     // 以 $method 为基准，创建一个 AopInterceptor 对象
-                    $interceptorId = self::INTERNAL_PREFIX . "$serviceId.{$method->getModifiers()}.{$method->getName()}.interceptor";
+                    $interceptorId = self::INTERNAL_PREFIX . "$serviceId.interceptor";
+                    $closureId = "{$interceptorId}.closure";
                     if (!$container->hasDefinition($interceptorId)) {
-                        $interceptorDefinition = clone $container->getDefinition('sf-aop.interceptor');
-                        $interceptorDefinition->addMethodCall('setServiceId', [$serviceId]);
-                        $interceptorDefinition->addMethodCall('setMethod', [$method->getName()]);
+                        $interceptorDefinition = clone $container->getDefinition(AopInterceptor::class);
+                        $interceptorDefinition->addMethodCall('setInternalServiceId', [$internalId]);
+                        $interceptorDefinition->addMethodCall('setProxyServiceId', [$serviceId]);
+                        // 如果原始服务是使用工厂类来生成的，那么我们在连接池也使用工厂类来创建对象
+                        $internalDef = $container->getDefinition($internalId);
+                        if (is_array($internalDef->getFactory())) {
+                            $interceptorDefinition->addMethodCall('setFactoryInstance', [$internalDef->getFactory()[0]]);
+                            $interceptorDefinition->addMethodCall('setFactoryMethod', [$internalDef->getFactory()[1]]);
+                            $interceptorDefinition->addMethodCall('setFactoryArguments', [$internalDef->getArguments()]);
+                        }
+                        $interceptorDefinition->setPublic(false); // 这个不应被公开调用
                         $container->setDefinition($interceptorId, $interceptorDefinition);
 
                         // 直接传一个服务会报错，要Closure才行
-                        $closureDefinition = clone $container->getDefinition('sf-aop.closure');
+                        $closureDefinition = new Definition();
+                        $closureDefinition->setClass(\Closure::class);
+                        $closureDefinition->setFactory([\Closure::class, 'fromCallable']);
                         $closureDefinition->setArguments([
                             new Reference($interceptorId),
                         ]);
-                        $closureId = "{$interceptorId}.closure";
+                        $closureDefinition->setPublic(false); // 这个不应被公开调用
                         $container->setDefinition($closureId, $closureDefinition);
+                    }
 
+                    $tag = "aop-method:{$method->getName()}";
+                    if (empty($aopNewService->getTag($tag))) {
+                        $aopNewService->addTag($tag, $config);
                         // 拦截这个方法
                         $aopNewService->addMethodCall('setMethodPrefixInterceptor', [
                             $method->getName(),
@@ -104,9 +158,17 @@ class AttributeCompilerPass implements CompilerPassInterface
                     }
 
                     $interceptorDefinition = $container->findDefinition($interceptorId);
-                    $interceptorDefinition->addMethodCall('addAttributes', [
-                        $config,
-                    ]);
+                    $interceptorDefinition->addTag('aop-intercept', ['method' => $method->getName()]);
+                    foreach ($config as $_attribute => $_functions) {
+                        foreach ($_functions as [$aspectServiceId, $aspectMethod]) {
+                            $interceptorDefinition->addMethodCall('addAttributeFunction', [
+                                $method->getName(),
+                                $_attribute,
+                                new ServiceClosureArgument(new Reference($aspectServiceId)),
+                                $aspectMethod,
+                            ]);
+                        }
+                    }
                 }
             }
         }
@@ -134,7 +196,7 @@ class AttributeCompilerPass implements CompilerPassInterface
             return null;
         }
 
-        return new \ReflectionClass($definition->getClass());
+        return $container->getReflectionClass($definition->getClass());
     }
 
     /**
@@ -153,14 +215,17 @@ class AttributeCompilerPass implements CompilerPassInterface
      */
     private function updateInternalServiceId(ContainerBuilder $container, string $serviceId): string
     {
-        $internalId = $serviceId . AttributeCompilerPass::INTERNAL_SUFFIX;
+        $internalId = $serviceId . AopAttributeCompilerPass::INTERNAL_SUFFIX;
 
         if (!$container->hasDefinition($internalId)) {
             $definition = $container->getDefinition($serviceId);
-            // 声明为public，方便后面动态调用
-            //$definition->setPublic(true);
-            // 一定要lazy
-            $definition->setLazy(true);
+            if (!$definition->isAbstract() && $serviceId !== 'session.abstract_handler') {
+                // 声明为public，方便后面动态调用，目前主要在 ServiceCallHandler 中调用
+                $definition->setPublic(true);
+            }
+            // 我们已经做了一层代理，如果再加上Lazy，感觉调用栈会太过复杂
+            // 暂时改为强制lazy
+            $definition->setLazy(false);
             // 之所以要清空tags，是因为我们要把这些tag归到代理对象去
             $existTags = $definition->getTags();
             $definition->clearTags();
@@ -168,13 +233,14 @@ class AttributeCompilerPass implements CompilerPassInterface
             $container->setDefinition($internalId, $definition);
 
             $aopNewService = (new Definition($definition->getClass()))
-                ->setFactory([new Reference('sf-aop.proxy-manager'), 'createProxy'])
+                ->setFactory([new Reference('sf-aop.value-holder-proxy-manager'), 'createProxy'])
                 ->setArguments([
                     new Reference($internalId),
                 ])
                 ->setPublic($definition->isPublic())
                 ->setTags($existTags) // 这里重新补上原始服务的tag
-                ->addTag('aop-proxy');
+                //->addTag('aop-proxy')
+                ;
             // 覆盖旧的服务名
             $container->setDefinition($serviceId, $aopNewService);
         }

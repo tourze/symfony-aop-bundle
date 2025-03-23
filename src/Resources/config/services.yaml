@@ -4,19 +4,10 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-  # 如果确认要使用自动扫描、自动注册，建议尽可能将要扫描的目录路径收缩，不要设置那么大的范围
-  AopBundle\:
-    resource: '../../'
-    exclude:
-      - '../../DependencyInjection/'
-      - '../../Enum/'
-      - '../../Entity/'
-      - '../../Event/'
-      - '../../Message/'
-      - '../../Model/'
-      - '../../Exception/'
-      - '../../Resources/'
-      - '../../Tests/'
+  Tourze\Symfony\AOP\Aspect\:
+    resource: '../../Aspect/'
+  Tourze\Symfony\AOP\Service\:
+    resource: '../../Service/'
 
   sf-aop.file-locator:
     class: ProxyManager\FileLocator\FileLocator
@@ -29,16 +20,7 @@ services:
     calls:
       - [ 'setGeneratorStrategy', [ '@sf-aop.generator-strategy' ] ]
       - [ 'setProxiesTargetDir', [ '%kernel.cache_dir%' ] ]
-      - [ 'setProxiesNamespace', [ 'ServicePoolProxy' ] ]
-  sf-aop.proxy-manager:
+      - [ 'setProxiesNamespace', [ 'AopProxy' ] ]
+  sf-aop.value-holder-proxy-manager:
     class: ProxyManager\Factory\AccessInterceptorValueHolderFactory
     arguments: [ '@sf-aop.configuration' ]
-
-  sf-aop.interceptor:
-    class: AopBundle\Service\AopInterceptor
-    tags: [ 'aop-interceptor' ]
-  sf-aop.closure:
-    class: Closure
-    factory: ['Closure', 'fromCallable']
-    arguments: [ '@sf-aop.interceptor' ]
-    tags: [ 'aop-closure' ]

@@ -1,16 +1,18 @@
 <?php
 
-namespace AopBundle;
+namespace Tourze\Symfony\AOP;
 
-use AopBundle\DependencyInjection\AttributeCompilerPass;
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Tourze\Symfony\AOP\DependencyInjection\Compiler\AopAttributeCompilerPass;
 
 class AopBundle extends Bundle
 {
     public function build(ContainerBuilder $container): void
     {
-        $container->addCompilerPass(new AttributeCompilerPass(), PassConfig::TYPE_BEFORE_REMOVING);
+        parent::build($container);
+
+        $container->addCompilerPass(new AopAttributeCompilerPass(), PassConfig::TYPE_BEFORE_REMOVING);
     }
 }

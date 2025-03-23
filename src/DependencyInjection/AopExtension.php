@@ -1,6 +1,6 @@
 <?php
 
-namespace AopBundle\DependencyInjection;
+namespace Tourze\Symfony\AOP\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

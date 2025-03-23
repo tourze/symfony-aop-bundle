@@ -1,12 +1,16 @@
 <?php
 
-namespace AopBundle\Model;
+namespace Tourze\Symfony\AOP\Model;
+
+use Tourze\Arrayable\Arrayable;
 
 /**
  * 参考Spring的AOP实现，有一些调整
  */
-class JoinPoint
+class JoinPoint implements Arrayable
 {
+    use PassTrait;
+
     private object $proxy;
 
     public function getProxy(): object
@@ -79,18 +83,6 @@ class JoinPoint
         $this->returnValue = $returnValue;
     }
 
-    private string $serviceId;
-
-    public function getServiceId(): string
-    {
-        return $this->serviceId;
-    }
-
-    public function setServiceId(string $serviceId): void
-    {
-        $this->serviceId = $serviceId;
-    }
-
     private int $sequenceId;
 
     public function getSequenceId(): int
@@ -101,5 +93,54 @@ class JoinPoint
     public function setSequenceId(int $sequenceId): void
     {
         $this->sequenceId = $sequenceId;
+    }
+
+    private ?\Throwable $exception = null;
+
+    public function getException(): ?\Throwable
+    {
+        return $this->exception;
+    }
+
+    public function setException(?\Throwable $exception): void
+    {
+        $this->exception = $exception;
+    }
+
+    /**
+     * 根据服务/方法/参数自动计算一个唯一ID
+     *
+     * @return string
+     */
+    public function getUniqueId(): string
+    {
+        $parts = [
+            $this->getInternalServiceId(),
+            //get_class($this->getInstance()),
+            $this->getMethod(),
+            md5(serialize($this->getParams())),
+        ];
+        $parts = implode('_', $parts);
+        // 要过滤一些特殊字符
+        return str_replace(['\\', '/', '!', ':', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '|', ',', ';', "'", '"'], '_', $parts);
+    }
+
+    /**
+     * 执行
+     */
+    public function proceed(): mixed
+    {
+        $object = $this->getInstance();
+        $method = $this->getMethod();
+        $params = $this->getParams();
+        return call_user_func_array([$object, $method], $params);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'serviceId' => $this->getInternalServiceId(),
+            'method' => $this->getMethod(),
+        ];
     }
 }

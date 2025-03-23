@@ -1,6 +1,6 @@
 <?php
 
-namespace AopBundle\Attribute;
+namespace Tourze\Symfony\AOP\Attribute;
 
 /**
  * 后置通知（After）：在目标方法执行之后执行的通知。它通常用于在目标方法执行之后进行一些清理工作，例如关闭数据库连接、释放资源等。
