@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Attribute;
+namespace Tourze\Symfony\Aop\Attribute;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 

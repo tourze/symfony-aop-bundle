@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Attribute;
+namespace Tourze\Symfony\Aop\Attribute;
 
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class Advice

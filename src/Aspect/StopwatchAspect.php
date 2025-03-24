@@ -1,14 +1,14 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Aspect;
+namespace Tourze\Symfony\Aop\Aspect;
 
 use Symfony\Component\Stopwatch\Stopwatch as SComponent;
 use Symfony\Component\Stopwatch\StopwatchEvent;
-use Tourze\Symfony\AOP\Attribute\After;
-use Tourze\Symfony\AOP\Attribute\Aspect;
-use Tourze\Symfony\AOP\Attribute\Before;
-use Tourze\Symfony\AOP\Attribute\Stopwatch;
-use Tourze\Symfony\AOP\Model\JoinPoint;
+use Tourze\Symfony\Aop\Attribute\After;
+use Tourze\Symfony\Aop\Attribute\Aspect;
+use Tourze\Symfony\Aop\Attribute\Before;
+use Tourze\Symfony\Aop\Attribute\Stopwatch;
+use Tourze\Symfony\Aop\Model\JoinPoint;
 
 #[Aspect]
 class StopwatchAspect

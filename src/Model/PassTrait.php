@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Model;
+namespace Tourze\Symfony\Aop\Model;
 
 trait PassTrait
 {

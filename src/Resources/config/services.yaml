@@ -4,9 +4,9 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-  Tourze\Symfony\AOP\Aspect\:
+  Tourze\Symfony\Aop\Aspect\:
     resource: '../../Aspect/'
-  Tourze\Symfony\AOP\Service\:
+  Tourze\Symfony\Aop\Service\:
     resource: '../../Service/'
 
   sf-aop.file-locator:

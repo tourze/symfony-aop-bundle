@@ -1,13 +1,13 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Service;
+namespace Tourze\Symfony\Aop\Service;
 
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\DependencyInjection\Attribute\Autoconfigure;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Contracts\Service\ResetInterface;
-use Tourze\Symfony\AOP\Model\ProcessContext;
+use Tourze\Symfony\Aop\Model\ProcessContext;
 use Workerman\Timer;
 use Workerman\Worker;
 

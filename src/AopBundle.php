@@ -1,11 +1,11 @@
 <?php
 
-namespace Tourze\Symfony\AOP;
+namespace Tourze\Symfony\Aop;
 
 use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
-use Tourze\Symfony\AOP\DependencyInjection\Compiler\AopAttributeCompilerPass;
+use Tourze\Symfony\Aop\DependencyInjection\Compiler\AopAttributeCompilerPass;
 
 class AopBundle extends Bundle
 {

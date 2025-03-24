@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Attribute;
+namespace Tourze\Symfony\Aop\Attribute;
 
 /**
  * 更加智能地添加stopwatch

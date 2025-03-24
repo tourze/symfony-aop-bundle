@@ -1,8 +1,8 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Service;
+namespace Tourze\Symfony\Aop\Service;
 
-use Tourze\Symfony\AOP\Model\JoinPoint;
+use Tourze\Symfony\Aop\Model\JoinPoint;
 
 class InstanceService
 {

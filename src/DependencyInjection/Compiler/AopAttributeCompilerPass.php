@@ -1,6 +1,6 @@
 <?php
 
-namespace Tourze\Symfony\AOP\DependencyInjection\Compiler;
+namespace Tourze\Symfony\Aop\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Argument\ServiceClosureArgument;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -9,9 +9,9 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ExpressionLanguage;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\ExpressionLanguage\ExpressionFunction;
-use Tourze\Symfony\AOP\Attribute\Advice;
-use Tourze\Symfony\AOP\Attribute\Aspect;
-use Tourze\Symfony\AOP\Service\AopInterceptor;
+use Tourze\Symfony\Aop\Attribute\Advice;
+use Tourze\Symfony\Aop\Attribute\Aspect;
+use Tourze\Symfony\Aop\Service\AopInterceptor;
 
 class AopAttributeCompilerPass implements CompilerPassInterface
 {

@@ -1,11 +1,11 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Aspect;
+namespace Tourze\Symfony\Aop\Aspect;
 
-use Tourze\Symfony\AOP\Attribute\AfterThrowing;
-use Tourze\Symfony\AOP\Attribute\Aspect;
-use Tourze\Symfony\AOP\Attribute\CatchException;
-use Tourze\Symfony\AOP\Model\JoinPoint;
+use Tourze\Symfony\Aop\Attribute\AfterThrowing;
+use Tourze\Symfony\Aop\Attribute\Aspect;
+use Tourze\Symfony\Aop\Attribute\CatchException;
+use Tourze\Symfony\Aop\Model\JoinPoint;
 
 #[Aspect]
 class ExceptionAspect

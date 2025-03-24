@@ -1,13 +1,13 @@
 <?php
 
-namespace Tourze\Symfony\AOP\Service;
+namespace Tourze\Symfony\Aop\Service;
 
-use Tourze\Symfony\AOP\Attribute\After;
-use Tourze\Symfony\AOP\Attribute\AfterReturning;
-use Tourze\Symfony\AOP\Attribute\AfterThrowing;
-use Tourze\Symfony\AOP\Attribute\Before;
-use Tourze\Symfony\AOP\Model\JoinPoint;
-use Tourze\Symfony\AOP\Model\PassTrait;
+use Tourze\Symfony\Aop\Attribute\After;
+use Tourze\Symfony\Aop\Attribute\AfterReturning;
+use Tourze\Symfony\Aop\Attribute\AfterThrowing;
+use Tourze\Symfony\Aop\Attribute\Before;
+use Tourze\Symfony\Aop\Model\JoinPoint;
+use Tourze\Symfony\Aop\Model\PassTrait;
 
 class AopInterceptor
 {
