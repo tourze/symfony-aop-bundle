@@ -35,14 +35,6 @@ class ContextService implements ResetInterface
         return false;
     }
 
-    /**
-     * 判断是否运行在Workerman环境中
-     */
-    public function isWorkerman(): bool
-    {
-        return class_exists(\Workerman\Worker::class) && \Workerman\Worker::$pidFile !== '';
-    }
-
     public function isSwoole(): bool
     {
         return class_exists(\Swoole\Coroutine::class) && \Swoole\Coroutine::getCid() > 0;
@@ -75,7 +67,10 @@ class ContextService implements ResetInterface
             return;
         }
 
-        if ($this->isWorkerman()) {
+        if (class_exists(\Workerman\Worker::class)
+            && \Workerman\Worker::$pidFile !== ''
+            && class_exists(\Workerman\Timer::class)
+        ) {
             \Workerman\Timer::add(0.001, $callback, persistent: false);
             return;
         }
