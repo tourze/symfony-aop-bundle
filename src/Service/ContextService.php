@@ -8,8 +8,6 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Contracts\Service\ResetInterface;
 use Tourze\Symfony\Aop\Model\ProcessContext;
-use Workerman\Timer;
-use Workerman\Worker;
 
 /**
  * 上下文管理
@@ -42,7 +40,7 @@ class ContextService implements ResetInterface
      */
     public function isWorkerman(): bool
     {
-        return Worker::$pidFile !== '';
+        return class_exists(\Workerman\Worker::class) && \Workerman\Worker::$pidFile !== '';
     }
 
     public function isSwoole(): bool
@@ -78,7 +76,7 @@ class ContextService implements ResetInterface
         }
 
         if ($this->isWorkerman()) {
-            Timer::add(0.001, $callback, persistent: false);
+            \Workerman\Timer::add(0.001, $callback, persistent: false);
             return;
         }
 

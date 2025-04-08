@@ -18,7 +18,7 @@ class ProcessContext
     public static function instance(int $pid): ProcessContext
     {
         if (!isset(static::$instances[$pid])) {
-            static::$instances[$pid] = new static($pid);
+            static::$instances[$pid] = new self($pid);
         }
         return static::$instances[$pid];
     }
