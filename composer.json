@@ -9,10 +9,14 @@
     "symfony/dependency-injection": "^6.4",
     "symfony/yaml": "^6.4 || ^7.1",
     "symfony/console": "^6.4",
+    "symfony/http-kernel": "^6.4",
     "symfony/expression-language": "^6.4",
     "symfony/framework-bundle": "^6.4",
     "symfony/stopwatch": "^6.4",
     "tourze/arrayable": "0.0.*"
+  },
+  "suggest": {
+    "workerman/workerman": "For workerman runtime"
   },
   "autoload": {
     "psr-4": {
