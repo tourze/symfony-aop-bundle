@@ -16,9 +16,6 @@
     "symfony/service-contracts": "^2.5 || ^3",
     "tourze/arrayable": "0.0.*"
   },
-  "suggest": {
-    "workerman/workerman": "For workerman runtime"
-  },
   "autoload": {
     "psr-4": {
       "Tourze\\Symfony\\Aop\\": "src"
