@@ -21,6 +21,11 @@
       "Tourze\\Symfony\\Aop\\": "src"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tourze\\Symfony\\Aop\\Tests\\": "tests"
+    }
+  },
   "require-dev": {
     "phpunit/phpunit": "^10.0",
     "phpstan/phpstan": "^2.1"
