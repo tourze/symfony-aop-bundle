@@ -61,8 +61,8 @@ class AopAttributeCompilerPass implements CompilerPassInterface
                         $statements[$instance->statement][$name][] = [$serviceId, $method->getName()];
                         // 强制修改为public，方便Interceptor去动态执行
                         $definition = $container->findDefinition($serviceId);
-                        // 减少不必要的初始化成本
-                        $definition->setLazy(true);
+                        // Aspect的类如果改为Lazy，可能会导致注入逻辑不符合预期
+                        // $definition->setLazy(true);
                         $definition->setPublic(true);
                     }
                 }
