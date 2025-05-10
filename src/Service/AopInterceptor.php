@@ -124,6 +124,7 @@ class AopInterceptor
             $instance = $joinPoint->getInstance();
         }
 
+        $returnValue = null;
         try {
             // 执行目标方法
 
