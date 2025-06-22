@@ -93,14 +93,14 @@ class AopInterceptor
     /**
      * 任何类型的注解，最终我们都是丢到这里去处理
      *
-     * @return mixed
-     * @var object $proxy the proxy that intercepted the method call
-     * @var object $instance the wrapped instance within the proxy
-     * @var string $method name of the called method
-     * @var array $params sorted array of parameters passed to the intercepted
+     * @param object $proxy the proxy that intercepted the method call
+     * @param object $instance the wrapped instance within the proxy
+     * @param string $method name of the called method
+     * @param array $params sorted array of parameters passed to the intercepted
      *                          method, indexed by parameter name
-     * @var bool $returnEarly flag to tell the interceptor proxy to return early, returning
+     * @param bool $returnEarly flag to tell the interceptor proxy to return early, returning
      *                          the interceptor's return value instead of executing the method logic
+     * @return mixed
      */
     public function __invoke(object $proxy, object $instance, string $method, array $params, bool &$returnEarly): mixed
     {
@@ -183,7 +183,5 @@ class AopInterceptor
                 */
             }
         }
-
-        return $returnValue;
     }
 }

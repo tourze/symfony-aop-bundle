@@ -252,6 +252,7 @@ class AopInterceptorTest extends TestCase
             // 不使用引用传递，避免语法错误
             $orderRef = &$executionOrder;
             return new class($orderRef) {
+                /** @phpstan-ignore-next-line */
                 private array $orderRef;
 
                 public function __construct(array &$orderRef)
@@ -271,6 +272,7 @@ class AopInterceptorTest extends TestCase
             // 不使用引用传递，避免语法错误
             $orderRef = &$executionOrder;
             return new class($orderRef) {
+                /** @phpstan-ignore-next-line */
                 private array $orderRef;
 
                 public function __construct(array &$orderRef)
@@ -290,6 +292,7 @@ class AopInterceptorTest extends TestCase
             // 不使用引用传递，避免语法错误
             $orderRef = &$executionOrder;
             return new class($orderRef) {
+                /** @phpstan-ignore-next-line */
                 private array $orderRef;
 
                 public function __construct(array &$orderRef)
@@ -311,6 +314,7 @@ class AopInterceptorTest extends TestCase
         // 动态添加方法到测试对象，使用静态变量追踪执行顺序
         $testOrderRef = &$executionOrder;
         $this->instance = new class($testOrderRef) {
+            /** @phpstan-ignore-next-line */
             private array $orderRef;
 
             public function __construct(array &$orderRef)

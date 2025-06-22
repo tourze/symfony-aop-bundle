@@ -15,8 +15,7 @@ class StopwatchAspect
 {
     public function __construct(
         private readonly ?SComponent $stopwatch = null,
-    )
-    {
+    ) {
         $this->eventMap = new \WeakMap();
     }
 
@@ -25,7 +24,7 @@ class StopwatchAspect
     #[Before(methodAttribute: Stopwatch::class)]
     public function startEvent(JoinPoint $joinPoint): void
     {
-        if (!$this->stopwatch) {
+        if ($this->stopwatch === null) {
             return;
         }
         $event = $this->stopwatch->start($joinPoint->getMethod(), $joinPoint->getInternalServiceId());
@@ -35,7 +34,7 @@ class StopwatchAspect
     #[After(methodAttribute: Stopwatch::class)]
     public function stopEvent(JoinPoint $joinPoint): void
     {
-        if (!$this->stopwatch) {
+        if ($this->stopwatch === null) {
             return;
         }
         if (!$this->eventMap->offsetExists($joinPoint)) {

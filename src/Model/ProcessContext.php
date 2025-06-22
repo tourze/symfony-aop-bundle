@@ -4,9 +4,7 @@ namespace Tourze\Symfony\Aop\Model;
 
 class ProcessContext
 {
-    public function __construct(private readonly int $pid)
-    {
-    }
+    public function __construct(private readonly int $pid) {}
 
     public function getPid(): int
     {
@@ -17,9 +15,9 @@ class ProcessContext
 
     public static function instance(int $pid): ProcessContext
     {
-        if (!isset(static::$instances[$pid])) {
-            static::$instances[$pid] = new self($pid);
+        if (!isset(self::$instances[$pid])) {
+            self::$instances[$pid] = new self($pid);
         }
-        return static::$instances[$pid];
+        return self::$instances[$pid];
     }
 }

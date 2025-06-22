@@ -22,7 +22,7 @@ class StopwatchTest extends TestCase
         foreach ($attributes as $attribute) {
             if ($attribute->getName() === \Attribute::class) {
                 $instance = $attribute->newInstance();
-                if ($instance->flags & \Attribute::IS_REPEATABLE) {
+                if (($instance->flags & \Attribute::IS_REPEATABLE) !== 0) {
                     $found = true;
                     break;
                 }
@@ -41,7 +41,7 @@ class StopwatchTest extends TestCase
         foreach ($attributes as $attribute) {
             if ($attribute->getName() === \Attribute::class) {
                 $instance = $attribute->newInstance();
-                if ($instance->flags & \Attribute::TARGET_METHOD) {
+                if (($instance->flags & \Attribute::TARGET_METHOD) !== 0) {
                     $found = true;
                     break;
                 }

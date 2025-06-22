@@ -12,22 +12,21 @@ class Advice
         public ?array $serviceIds = null,
         public ?array $serviceTags = null,
         public ?array $parentClasses = null,
-    )
-    {
+    ) {
         if ($this->classAttribute !== null) {
-            $this->statement = static::getClassAttributeStatement($this->classAttribute);
+            $this->statement = self::getClassAttributeStatement($this->classAttribute);
         }
         if ($this->methodAttribute !== null) {
-            $this->statement = static::getMethodAttributeStatement($this->methodAttribute);
+            $this->statement = self::getMethodAttributeStatement($this->methodAttribute);
         }
         if ($this->serviceIds !== null) {
-            $this->statement = static::getServiceIdStatement($this->serviceIds);
+            $this->statement = self::getServiceIdStatement($this->serviceIds);
         }
         if ($this->serviceTags !== null) {
-            $this->statement = static::getServiceTagStatement($this->serviceTags);
+            $this->statement = self::getServiceTagStatement($this->serviceTags);
         }
         if ($this->parentClasses !== null) {
-            $this->statement = static::getParentClassStatement($this->parentClasses);
+            $this->statement = self::getParentClassStatement($this->parentClasses);
         }
     }
 

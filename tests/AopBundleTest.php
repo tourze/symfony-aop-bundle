@@ -14,7 +14,7 @@ class AopBundleTest extends TestCase
     public function testBundleBuild(): void
     {
         $bundle = new AopBundle();
-        /** @var ContainerBuilder|MockObject $containerBuilder */
+        /** @var MockObject&ContainerBuilder $containerBuilder */
         $containerBuilder = $this->createMock(ContainerBuilder::class);
 
         // 验证是否添加了正确的编译器

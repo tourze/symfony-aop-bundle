@@ -27,7 +27,7 @@ class JoinPointTest extends TestCase
     public function testInstance(): void
     {
         $this->joinPoint->setInstance($this->instance);
-        $this->assertSame($this->instance, $this->joinPoint->getinstance());
+        $this->assertSame($this->instance, $this->joinPoint->getInstance());
     }
 
     public function testMethod(): void
@@ -79,7 +79,6 @@ class JoinPointTest extends TestCase
         $this->joinPoint->setInternalServiceId('test.service');
 
         $uniqueId = $this->joinPoint->getUniqueId();
-        $this->assertIsString($uniqueId);
         $this->assertNotEmpty($uniqueId);
 
         // Test that the same inputs produce the same unique ID
@@ -97,7 +96,6 @@ class JoinPointTest extends TestCase
         $this->joinPoint->setInternalServiceId('test.service');
 
         $array = $this->joinPoint->toArray();
-        $this->assertIsArray($array);
         $this->assertArrayHasKey('serviceId', $array);
         $this->assertArrayHasKey('method', $array);
         $this->assertEquals('test.service', $array['serviceId']);

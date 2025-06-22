@@ -42,12 +42,12 @@ class AopAttributeCompilerPass implements CompilerPassInterface
         $statements = [];
         foreach (array_keys($container->findTaggedServiceIds(Aspect::TAG_NAME)) as $serviceId) {
             $reflectionClass = $this->getReflectionClass($container, $serviceId);
-            if (!$reflectionClass) {
+            if ($reflectionClass === null) {
                 continue;
             }
             foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
                 foreach ($method->getAttributes() as $attribute) {
-                    /** @var \ReflectionAttribute $attribute */
+                    /** @var \ReflectionAttribute<object> $attribute */
                     $name = $attribute->getName();
                     if (is_subclass_of($name, Advice::class)) {
                         $instance = $attribute->newInstance();
@@ -77,12 +77,13 @@ class AopAttributeCompilerPass implements CompilerPassInterface
         // 这里为了快速实现，我们使用了表达式组件，跟Spring的实现有差异
         $expressionLanguage = new ExpressionLanguage(null, $container->getExpressionLanguageProviders());
         $expressionLanguage->addFunction(ExpressionFunction::fromPhp('count'));
+        $expressionLanguage->addFunction(ExpressionFunction::fromPhp('in_array'));
         foreach ($container->getServiceIds() as $serviceId) {
             if ($this->isInternalService($serviceId)) {
                 continue;
             }
             $reflectionClass = $this->getReflectionClass($container, $serviceId);
-            if (!$reflectionClass) {
+            if ($reflectionClass === null) {
                 continue;
             }
             // 为了减少循环依赖问题，这里我们暂时忽略Aspect
@@ -105,13 +106,14 @@ class AopAttributeCompilerPass implements CompilerPassInterface
                     // 满足条件，我们开始拦截方法
                     if (
                         $statement !== $fullName
-                        && !$expressionLanguage->evaluate($statement, [
+                        && !(bool) $expressionLanguage->evaluate($statement, [
                             'class' => $reflectionClass,
                             'method' => $method,
                             'serviceId' => $serviceId,
                             'serviceTags' => $serviceTags,
                             'parentClasses' => self::getParentClasses($reflectionClass),
-                        ])) {
+                        ])
+                    ) {
                         continue;
                     }
 
@@ -219,6 +221,8 @@ class AopAttributeCompilerPass implements CompilerPassInterface
 
         if (!$container->hasDefinition($internalId)) {
             $definition = $container->getDefinition($serviceId);
+            // 保存原始的 public 状态
+            $originalPublic = $definition->isPublic();
             if (!$definition->isAbstract() && $serviceId !== 'session.abstract_handler') {
                 // 声明为public，方便后面动态调用，目前主要在 ServiceCallHandler 中调用
                 $definition->setPublic(true);
@@ -237,10 +241,10 @@ class AopAttributeCompilerPass implements CompilerPassInterface
                 ->setArguments([
                     new Reference($internalId),
                 ])
-                ->setPublic($definition->isPublic())
+                ->setPublic($originalPublic)
                 ->setTags($existTags) // 这里重新补上原始服务的tag
                 //->addTag('aop-proxy')
-                ;
+            ;
             // 覆盖旧的服务名
             $container->setDefinition($serviceId, $aopNewService);
         }
