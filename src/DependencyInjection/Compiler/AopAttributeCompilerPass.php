@@ -40,6 +40,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
         // 收集所有的 Aspect
         // 需要解析其中的所有 Method，判断是否存在切面
         $statements = [];
+        // @phpstan-ignore-next-line symfony.noFindTaggedServiceIdsCall
         foreach (array_keys($container->findTaggedServiceIds(Aspect::TAG_NAME)) as $serviceId) {
             $reflectionClass = $this->getReflectionClass($container, $serviceId);
             if ($reflectionClass === null) {

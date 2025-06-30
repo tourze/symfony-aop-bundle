@@ -144,6 +144,7 @@ class AopInterceptor
                 }
             }
 
+            /** @phpstan-ignore-next-line */
             $returnValue = $instance->{$method}(...$params);
             $joinPoint->setReturnValue($returnValue);
 

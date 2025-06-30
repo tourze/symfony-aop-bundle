@@ -2,6 +2,7 @@
 
 namespace Tourze\Symfony\Aop\Tests\DependencyInjection\Compiler\Fixtures;
 
+/** @phpstan-ignore-next-line */
 class TargetService
 {
     public function __construct()

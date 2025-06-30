@@ -7,6 +7,7 @@ use Tourze\Symfony\Aop\Attribute\After;
 use Tourze\Symfony\Aop\Attribute\AfterReturning;
 use Tourze\Symfony\Aop\Attribute\AfterThrowing;
 use Tourze\Symfony\Aop\Attribute\Before;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestRuntimeException;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 use Tourze\Symfony\Aop\Service\AopInterceptor;
 
@@ -194,7 +195,7 @@ class AopInterceptorTest extends TestCase
         $this->instance = new class {
             public function testMethod()
             {
-                throw new \RuntimeException('Test exception');
+                throw new TestRuntimeException('Test exception');
             }
         };
 

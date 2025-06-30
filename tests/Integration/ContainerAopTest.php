@@ -10,60 +10,11 @@ use ProxyManager\GeneratorStrategy\FileWriterGeneratorStrategy;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
-use Tourze\Symfony\Aop\Attribute\After;
-use Tourze\Symfony\Aop\Attribute\AfterReturning;
-use Tourze\Symfony\Aop\Attribute\AfterThrowing;
 use Tourze\Symfony\Aop\Attribute\Aspect;
-use Tourze\Symfony\Aop\Attribute\Before;
 use Tourze\Symfony\Aop\DependencyInjection\Compiler\AopAttributeCompilerPass;
-use Tourze\Symfony\Aop\Model\JoinPoint;
 use Tourze\Symfony\Aop\Service\AopInterceptor;
-
-// Test service
-class TestService
-{
-    public function doWork(): string
-    {
-        return 'original';
-    }
-    
-    public function throwError(): void
-    {
-        throw new \RuntimeException('Test error');
-    }
-}
-
-// Test aspect
-#[Aspect]
-class TestAspect
-{
-    public array $log = [];
-    
-    #[Before(statement: 'method.getName() == "doWork"')]
-    public function beforeWork(JoinPoint $joinPoint): void
-    {
-        $this->log[] = 'before';
-    }
-    
-    #[After(statement: 'method.getName() == "doWork"')]
-    public function afterWork(JoinPoint $joinPoint): void
-    {
-        $this->log[] = 'after';
-    }
-    
-    #[AfterReturning(statement: 'method.getName() == "doWork"')]
-    public function afterReturningWork(JoinPoint $joinPoint): void
-    {
-        $this->log[] = 'afterReturning';
-    }
-    
-    #[AfterThrowing(statement: 'method.getName() == "throwError"')]
-    public function afterThrowingError(JoinPoint $joinPoint): void
-    {
-        $this->log[] = 'afterThrowing';
-        // Note: Currently AopInterceptor doesn't support modifying exceptions
-    }
-}
+use Tourze\Symfony\Aop\Tests\Fixtures\ContainerTestAspect;
+use Tourze\Symfony\Aop\Tests\Fixtures\ContainerTestService;
 
 class ContainerAopTest extends TestCase
 {
@@ -98,12 +49,12 @@ class ContainerAopTest extends TestCase
         $container->setDefinition(AopInterceptor::class, $interceptorPrototype);
         
         // Register test service
-        $serviceDef = new Definition(TestService::class);
+        $serviceDef = new Definition(ContainerTestService::class);
         $serviceDef->setPublic(true);
         $container->setDefinition('test.service', $serviceDef);
         
         // Register test aspect
-        $aspectDef = new Definition(TestAspect::class);
+        $aspectDef = new Definition(ContainerTestAspect::class);
         $aspectDef->addTag(Aspect::TAG_NAME);
         $aspectDef->setPublic(true);
         $container->setDefinition('test.aspect', $aspectDef);
@@ -115,9 +66,9 @@ class ContainerAopTest extends TestCase
         $container->compile();
         
         // Get services
-        /** @var TestService $service */
+        /** @var ContainerTestService $service */
         $service = $container->get('test.service');
-        /** @var TestAspect $aspect */
+        /** @var ContainerTestAspect $aspect */
         $aspect = $container->get('test.aspect');
         
         // Test method interception

@@ -5,28 +5,12 @@ namespace Tourze\Symfony\Aop\Tests\Service;
 use PHPUnit\Framework\TestCase;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 use Tourze\Symfony\Aop\Service\InstanceService;
-
-// Test fixtures
-class TestFactory
-{
-    public static function createStaticInstance(string $arg1, int $arg2): TestProduct
-    {
-        return new TestProduct($arg1, $arg2);
-    }
-    
-    public function createInstance(string $arg1, int $arg2): TestProduct
-    {
-        return new TestProduct($arg1, $arg2);
-    }
-}
-
-class TestProduct
-{
-    public function __construct(
-        public string $arg1,
-        public int $arg2
-    ) {}
-}
+use Tourze\Symfony\Aop\Tests\Fixtures\TestFactory;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestFactoryMultiArgs;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestFactoryNoArgs;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestProduct;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestProductMultiArgs;
+use Tourze\Symfony\Aop\Tests\Fixtures\TestProductNoArgs;
 
 class InstanceServiceTest extends TestCase
 {
@@ -112,32 +96,4 @@ class InstanceServiceTest extends TestCase
         parent::setUp();
         $this->service = new InstanceService();
     }
-}
-
-// Additional test fixtures
-class TestFactoryNoArgs
-{
-    public static function create(): TestProductNoArgs
-    {
-        return new TestProductNoArgs();
-    }
-}
-
-class TestProductNoArgs
-{
-}
-
-class TestFactoryMultiArgs
-{
-    public static function create(...$args): TestProductMultiArgs
-    {
-        return new TestProductMultiArgs($args);
-    }
-}
-
-class TestProductMultiArgs
-{
-    public function __construct(
-        public array $args
-    ) {}
 }

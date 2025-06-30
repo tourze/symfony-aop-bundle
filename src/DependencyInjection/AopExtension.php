@@ -7,6 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
+/** @phpstan-ignore-next-line */
 class AopExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void

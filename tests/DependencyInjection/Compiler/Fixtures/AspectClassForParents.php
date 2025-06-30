@@ -6,6 +6,7 @@ use Tourze\Symfony\Aop\Attribute\Aspect;
 use Tourze\Symfony\Aop\Attribute\Before;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 
+/** @phpstan-ignore-next-line */
 #[Aspect]
 class AspectClassForParents
 {
