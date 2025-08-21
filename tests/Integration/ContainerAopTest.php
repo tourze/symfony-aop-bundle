@@ -64,7 +64,7 @@ class ContainerAopTest extends TestCase
         
         // Compile container
         $container->compile();
-      
+
         // Get services
         /** @var ContainerTestService $service */
         $service = $container->get('test.service');
