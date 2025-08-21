@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   phpunit:
-    name: PHP-${{ matrix.php_version }}-${{ matrix.perfer }}
+    name: PHP-${{ matrix.php_version }}-Symfony-${{ matrix.symfony_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -13,11 +13,30 @@ jobs:
           - 8.2
           - 8.3
           - 8.4
-        perfer:
-          - stable
+        symfony_version:
+          - "6.4.*"
+          - "7.0.*"
+        exclude:
+          - php_version: 8.1
+            symfony_version: "7.0.*"
     steps:
       - uses: actions/checkout@master
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php_version }}
+          extensions: mbstring, intl, xml, ctype, iconv, pdo_sqlite
+          coverage: none
       - name: Install Dependencies
-        run: composer update --prefer-dist --no-interaction --no-suggest --prefer-${{ matrix.perfer }}
+        run: |
+          composer require --no-update "symfony/framework-bundle:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/dependency-injection:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/config:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/console:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/expression-language:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/http-kernel:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/stopwatch:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/yaml:${{ matrix.symfony_version }}"
+          composer update --prefer-dist --no-interaction
       - name: Run PHPUnit
         run: ./vendor/bin/phpunit tests
