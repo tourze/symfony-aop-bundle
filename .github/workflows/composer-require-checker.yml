@@ -11,16 +11,29 @@ permissions:
 
 jobs:
   build:
-
+    name: Composer Require Check
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        symfony_version:
+          - "6.4.*"
+          - "7.0.*"
+        php_version:
+          - 8.2
+          - 8.3
+          - 8.4
+        exclude:
+          - php_version: 8.2
+            symfony_version: "7.0.*"
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: ${{ matrix.php_version }}
 
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
@@ -30,12 +43,22 @@ jobs:
         uses: actions/cache@v3
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-php-${{ matrix.php_version }}-symfony-${{ matrix.symfony_version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-
+            ${{ runner.os }}-php-${{ matrix.php_version }}-symfony-${{ matrix.symfony_version }}-
+            ${{ runner.os }}-php-${{ matrix.php_version }}-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+        run: |
+          composer require --no-update "symfony/framework-bundle:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/dependency-injection:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/config:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/console:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/expression-language:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/http-kernel:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/stopwatch:${{ matrix.symfony_version }}"
+          composer require --no-update "symfony/yaml:${{ matrix.symfony_version }}"
+          composer install --prefer-dist --no-progress
 
       - name: Run
         run: XDEBUG_MODE=off ./vendor/bin/composer-require-checker check composer.json

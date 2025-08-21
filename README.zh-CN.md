@@ -11,7 +11,7 @@ AopBundle 是一个基于 Symfony 的 AOP (面向切面编程) 实现包。它�
 ## 系统要求
 
 - PHP 8.1+
-- Symfony 6.4+
+- Symfony 6.4+ 或 7.0+
 
 ## 安装方法
 

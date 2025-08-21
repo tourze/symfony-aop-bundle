@@ -11,7 +11,7 @@ AopBundle is a Symfony bundle that implements Aspect-Oriented Programming (AOP) 
 ## Requirements
 
 - PHP 8.1+
-- Symfony 6.4+
+- Symfony 6.4+ or 7.0+
 
 ## Installation
 
