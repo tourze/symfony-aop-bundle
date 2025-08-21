@@ -80,7 +80,6 @@ class ContainerAopTest extends TestCase
         // Verify result is not modified (AfterReturning doesn't support it)
         $this->assertEquals('original', $result);
 
-        /*
         // Test exception handling
         $aspect->log = [];
         try {
@@ -90,13 +89,13 @@ class ContainerAopTest extends TestCase
             $this->assertEquals('Test error', $e->getMessage());
             $this->assertEquals(['afterThrowing'], $aspect->log);
         }
-        */
+
         // Clean up
         if (is_dir($cacheDir)) {
-            //$this->removeDirectory($cacheDir);
+            $this->removeDirectory($cacheDir);
         }
     }
-    
+
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {
