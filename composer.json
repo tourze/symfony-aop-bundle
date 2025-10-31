@@ -11,6 +11,7 @@
     "symfony/expression-language": "^7.3",
     "symfony/framework-bundle": "^7.3",
     "symfony/http-kernel": "^7.3",
+    "symfony/property-access": "^7.3",
     "symfony/service-contracts": "^3.6",
     "symfony/stopwatch": "^7.3",
     "symfony/yaml": "^7.3",
@@ -20,7 +21,7 @@
     "phpstan/phpstan": "^2.1",
     "phpunit/phpunit": "^11.5",
     "tourze/phpunit-base": "1.*",
-    "tourze/phpunit-symfony-kernel-test": "1.*",
+    "tourze/phpunit-symfony-kernel-test": "1.0.*",
     "tourze/phpunit-symfony-unit-test": "1.*",
     "tourze/symfony-dependency-service-loader": "1.*"
   },
