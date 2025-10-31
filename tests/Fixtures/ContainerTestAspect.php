@@ -7,35 +7,36 @@ use Tourze\Symfony\Aop\Attribute\AfterReturning;
 use Tourze\Symfony\Aop\Attribute\AfterThrowing;
 use Tourze\Symfony\Aop\Attribute\Aspect;
 use Tourze\Symfony\Aop\Attribute\Before;
-use Tourze\Symfony\Aop\Model\JoinPoint;
 
+/**
+ * 测试用的切面类
+ */
 #[Aspect]
 class ContainerTestAspect
 {
     public array $log = [];
-    
-    #[Before(statement: 'method.getName() == "doWork"')]
-    public function beforeWork(JoinPoint $joinPoint): void
+
+    #[Before(statement: 'class.getName() == "Tourze\\\Symfony\\\Aop\\\Tests\\\Fixtures\\\ContainerTestService" and method.getName() == "doWork"')]
+    public function beforeAdvice(): void
     {
         $this->log[] = 'before';
     }
-    
-    #[After(statement: 'method.getName() == "doWork"')]
-    public function afterWork(JoinPoint $joinPoint): void
-    {
-        $this->log[] = 'after';
-    }
-    
-    #[AfterReturning(statement: 'method.getName() == "doWork"')]
-    public function afterReturningWork(JoinPoint $joinPoint): void
+
+    #[AfterReturning(statement: 'class.getName() == "Tourze\\\Symfony\\\Aop\\\Tests\\\Fixtures\\\ContainerTestService" and method.getName() == "doWork"')]
+    public function afterReturningAdvice(): void
     {
         $this->log[] = 'afterReturning';
     }
-    
-    #[AfterThrowing(statement: 'method.getName() == "throwError"')]
-    public function afterThrowingError(JoinPoint $joinPoint): void
+
+    #[After(statement: 'class.getName() == "Tourze\\\Symfony\\\Aop\\\Tests\\\Fixtures\\\ContainerTestService" and method.getName() == "doWork"')]
+    public function afterAdvice(): void
+    {
+        $this->log[] = 'after';
+    }
+
+    #[AfterThrowing(statement: 'class.getName() == "Tourze\\\Symfony\\\Aop\\\Tests\\\Fixtures\\\ContainerTestService" and method.getName() == "throwError"')]
+    public function afterThrowingAdvice(): void
     {
         $this->log[] = 'afterThrowing';
-        // Note: Currently AopInterceptor doesn't support modifying exceptions
     }
 }

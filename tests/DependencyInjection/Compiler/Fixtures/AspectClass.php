@@ -7,7 +7,6 @@ use Tourze\Symfony\Aop\Attribute\Aspect;
 use Tourze\Symfony\Aop\Attribute\Before;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 
-/** @phpstan-ignore-next-line */
 #[Aspect]
 class AspectClass
 {
@@ -23,13 +22,13 @@ class AspectClass
         // After advice for tagged services
     }
 
-    #[Before(statement: 'in_array("Tourze\\\\Symfony\\\\Aop\\\\Tests\\\\DependencyInjection\\\\Compiler\\\\Fixtures\\\\AbstractServiceClass", parentClasses)')]
+    #[Before(statement: 'in_array("Tourze\\\Symfony\\\Aop\\\Tests\\\DependencyInjection\\\Compiler\\\Fixtures\\\AbstractServiceClass", parentClasses)')]
     public function beforeParentClass(JoinPoint $joinPoint): void
     {
         // Before advice for parent class
     }
 
-    #[Before(statement: 'in_array("Tourze\\\\Symfony\\\\Aop\\\\Tests\\\\DependencyInjection\\\\Compiler\\\\Fixtures\\\\ServiceInterface", parentClasses)')]
+    #[Before(statement: 'in_array("Tourze\\\Symfony\\\Aop\\\Tests\\\DependencyInjection\\\Compiler\\\Fixtures\\\ServiceInterface", parentClasses)')]
     public function beforeInterface(JoinPoint $joinPoint): void
     {
         // Before advice for interface

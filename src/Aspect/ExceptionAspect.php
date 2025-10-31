@@ -13,8 +13,8 @@ class ExceptionAspect
     #[AfterThrowing(classAttribute: CatchException::class)]
     public function catchException(JoinPoint $joinPoint): void
     {
-        if ($joinPoint->getException() !== null) {
-            //dump($joinPoint->getException());
+        if (null !== $joinPoint->getException()) {
+            // dump($joinPoint->getException());
         }
     }
 }

@@ -1,0 +1,2 @@
+rules:
+    - Tourze\Symfony\Aop\PHPStan\Rules\MutuallyExclusiveAttributeRule

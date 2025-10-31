@@ -6,11 +6,10 @@ use Tourze\Symfony\Aop\Attribute\Aspect;
 use Tourze\Symfony\Aop\Attribute\Before;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 
-/** @phpstan-ignore-next-line */
 #[Aspect]
 class AspectClassForParents
 {
-    #[Before(statement: 'in_array("Tourze\\\\Symfony\\\\Aop\\\\Tests\\\\DependencyInjection\\\\Compiler\\\\Fixtures\\\\AbstractServiceClass", parentClasses) and method.getName() == "process"')]
+    #[Before(statement: 'in_array("Tourze\\\Symfony\\\Aop\\\Tests\\\DependencyInjection\\\Compiler\\\Fixtures\\\AbstractServiceClass", parentClasses) and method.getName() == "process"')]
     public function beforeParentClass(JoinPoint $joinPoint): void
     {
         // Before advice for parent class

@@ -2,98 +2,136 @@
 
 namespace Tourze\Symfony\Aop\Tests\Service;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
+use Tourze\Symfony\Aop\Exception\AopException;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 use Tourze\Symfony\Aop\Service\InstanceService;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestFactory;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestFactoryMultiArgs;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestFactoryNoArgs;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestProduct;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestProductMultiArgs;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestProductNoArgs;
 
-class InstanceServiceTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(InstanceService::class)]
+#[RunTestsInSeparateProcesses]
+final class InstanceServiceTest extends AbstractIntegrationTestCase
 {
-    private InstanceService $service;
-    
-    public function testCreateWithStaticFactoryMethod(): void
+    private InstanceService $instanceService;
+
+    protected function onSetUp(): void
     {
-        $joinPoint = $this->createMock(JoinPoint::class);
-        $joinPoint->method('getInstance')->willReturn(new \stdClass());
-        $joinPoint->method('getFactoryInstance')->willReturn(TestFactory::class);
-        $joinPoint->method('getFactoryMethod')->willReturn('createStaticInstance');
-        $joinPoint->method('getFactoryArguments')->willReturn(['test', 42]);
-
-        $result = $this->service->create($joinPoint);
-
-        $this->assertInstanceOf(TestProduct::class, $result);
-        $this->assertEquals('test', $result->arg1);
-        $this->assertEquals(42, $result->arg2);
+        $this->instanceService = self::getService(InstanceService::class);
     }
-    
-    public function testCreateWithObjectFactoryMethod(): void
+
+    private function createJoinPoint(): JoinPoint
     {
-        $factory = new TestFactory();
-        $joinPoint = $this->createMock(JoinPoint::class);
-        $joinPoint->method('getInstance')->willReturn(new \stdClass());
-        $joinPoint->method('getFactoryInstance')->willReturn($factory);
-        $joinPoint->method('getFactoryMethod')->willReturn('createInstance');
-        $joinPoint->method('getFactoryArguments')->willReturn(['object', 123]);
-
-        $result = $this->service->create($joinPoint);
-
-        $this->assertInstanceOf(TestProduct::class, $result);
-        $this->assertEquals('object', $result->arg1);
-        $this->assertEquals(123, $result->arg2);
+        // JoinPoint is a simple value object, not a service
+        // But we follow the pattern to avoid direct instantiation in integration tests
+        return new JoinPoint();
     }
-    
+
     public function testCreateWithClone(): void
     {
-        $originalInstance = new TestProduct('original', 999);
-        $joinPoint = $this->createMock(JoinPoint::class);
-        $joinPoint->method('getInstance')->willReturn($originalInstance);
-        $joinPoint->method('getFactoryInstance')->willReturn(null);
-        $joinPoint->method('getFactoryMethod')->willReturn(null);
-        $joinPoint->method('getFactoryArguments')->willReturn([]);
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {
+            public string $value = 'test';
+        };
+        $joinPoint->setInstance($instance);
 
-        $result = $this->service->create($joinPoint);
+        $result = $this->instanceService->create($joinPoint);
 
-        $this->assertInstanceOf(TestProduct::class, $result);
-        $this->assertNotSame($originalInstance, $result);
-        $this->assertEquals('original', $result->arg1);
-        $this->assertEquals(999, $result->arg2);
+        $this->assertEquals($instance, $result);
+        $this->assertNotSame($instance, $result); // 应该是克隆的对象
     }
-    
-    public function testCreateWithEmptyFactoryArguments(): void
+
+    public function testCreateWithStaticFactory(): void
     {
-        $joinPoint = $this->createMock(JoinPoint::class);
-        $joinPoint->method('getInstance')->willReturn(new \stdClass());
-        $joinPoint->method('getFactoryInstance')->willReturn(TestFactoryNoArgs::class);
-        $joinPoint->method('getFactoryMethod')->willReturn('create');
-        $joinPoint->method('getFactoryArguments')->willReturn([]);
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $joinPoint->setFactoryInstance(TestFactory::class);
+        $joinPoint->setFactoryMethod('createInstance');
+        $joinPoint->setFactoryArguments(['test-value']);
 
-        $result = $this->service->create($joinPoint);
+        $result = $this->instanceService->create($joinPoint);
 
-        $this->assertInstanceOf(TestProductNoArgs::class, $result);
+        $this->assertInstanceOf(TestFactory::class, $result);
+        $this->assertEquals('test-value', $result->value);
     }
-    
-    public function testCreateWithMultipleArguments(): void
+
+    public function testCreateWithObjectFactory(): void
     {
-        $joinPoint = $this->createMock(JoinPoint::class);
-        $joinPoint->method('getInstance')->willReturn(new \stdClass());
-        $joinPoint->method('getFactoryInstance')->willReturn(TestFactoryMultiArgs::class);
-        $joinPoint->method('getFactoryMethod')->willReturn('create');
-        $joinPoint->method('getFactoryArguments')->willReturn(['a', 'b', 'c', 'd', 'e']);
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $factory = new TestFactory();
+        $joinPoint->setFactoryInstance($factory);
+        $joinPoint->setFactoryMethod('createInstance');
+        $joinPoint->setFactoryArguments(['test-value']);
 
-        $result = $this->service->create($joinPoint);
+        $result = $this->instanceService->create($joinPoint);
 
-        $this->assertInstanceOf(TestProductMultiArgs::class, $result);
-        $this->assertEquals(['a', 'b', 'c', 'd', 'e'], $result->args);
+        $this->assertInstanceOf(TestFactory::class, $result);
+        $this->assertEquals('test-value', $result->value);
     }
-    
-    protected function setUp(): void
+
+    public function testCreateWithInvalidStaticFactory(): void
     {
-        parent::setUp();
-        $this->service = new InstanceService();
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $joinPoint->setFactoryInstance('NonExistentClass');
+        $joinPoint->setFactoryMethod('nonExistentMethod');
+        $joinPoint->setFactoryArguments([]);
+
+        $this->expectException(AopException::class);
+        $this->expectExceptionMessage('Static method NonExistentClass::nonExistentMethod is not callable');
+
+        $this->instanceService->create($joinPoint);
+    }
+
+    public function testCreateWithInvalidObjectFactory(): void
+    {
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $factory = new TestFactory();
+        $joinPoint->setFactoryInstance($factory);
+        $joinPoint->setFactoryMethod('nonExistentMethod');
+        $joinPoint->setFactoryArguments([]);
+
+        $this->expectException(AopException::class);
+        $this->expectExceptionMessage('Method Tourze\Symfony\Aop\Tests\Service\TestFactory::nonExistentMethod is not callable');
+
+        $this->instanceService->create($joinPoint);
+    }
+
+    public function testCreateWithMissingFactoryMethod(): void
+    {
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $joinPoint->setFactoryInstance(TestFactory::class);
+        // 不设置 factoryMethod
+
+        $result = $this->instanceService->create($joinPoint);
+
+        $this->assertEquals($instance, $result);
+        $this->assertNotSame($instance, $result);
+    }
+
+    public function testCreateWithMissingFactoryArguments(): void
+    {
+        $joinPoint = $this->createJoinPoint();
+        $instance = new class {};
+        $joinPoint->setInstance($instance);
+        $joinPoint->setFactoryInstance(TestFactory::class);
+        $joinPoint->setFactoryMethod('createInstance');
+        // 不设置 factoryArguments
+
+        $result = $this->instanceService->create($joinPoint);
+
+        $this->assertEquals($instance, $result);
+        $this->assertNotSame($instance, $result);
     }
 }

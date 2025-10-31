@@ -2,10 +2,15 @@
 
 namespace Tourze\Symfony\Aop\Tests\Attribute;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\Symfony\Aop\Attribute\Before;
 
-class BeforeTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Before::class)]
+final class BeforeTest extends TestCase
 {
     public function testInheritanceFromAdvice(): void
     {
@@ -15,16 +20,18 @@ class BeforeTest extends TestCase
 
     public function testConstructorWithClassAttribute(): void
     {
-        $before = new Before(classAttribute: 'App\\Attribute\\TestAttribute');
+        $before = new Before(classAttribute: 'App\Attribute\TestAttribute');
         $actualStatement = $before->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('count(class.getAttributes(', $actualStatement);
         $this->assertStringContainsString('TestAttribute', $actualStatement);
     }
 
     public function testConstructorWithMethodAttribute(): void
     {
-        $before = new Before(methodAttribute: 'App\\Attribute\\TestAttribute');
+        $before = new Before(methodAttribute: 'App\Attribute\TestAttribute');
         $actualStatement = $before->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('count(method.getAttributes(', $actualStatement);
         $this->assertStringContainsString('TestAttribute', $actualStatement);
     }
@@ -45,9 +52,42 @@ class BeforeTest extends TestCase
 
     public function testConstructorWithParentClasses(): void
     {
-        $before = new Before(parentClasses: ['App\\BaseClass']);
+        $before = new Before(parentClasses: ['App\BaseClass']);
         $actualStatement = $before->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('!class.isFinal()', $actualStatement);
         $this->assertStringContainsString('BaseClass', $actualStatement);
+    }
+
+    public function testInitializeAdvice(): void
+    {
+        $before = new Before();
+
+        // Test that initializeAdvice is called during construction
+        // Since the constructor already calls initializeAdvice(), we can test the behavior indirectly
+        $this->assertNull($before->statement);
+
+        // Test with classAttribute
+        $before = new Before(classAttribute: 'TestAttribute');
+        $this->assertEquals("count(class.getAttributes('TestAttribute')) > 0", $before->statement);
+
+        // Test with methodAttribute
+        $before = new Before(methodAttribute: 'TestMethod');
+        $this->assertEquals("count(method.getAttributes('TestMethod')) > 0", $before->statement);
+
+        // Test with serviceIds
+        $before = new Before(serviceIds: ['service1', 'service2']);
+        $this->assertEquals("(serviceId in ['service1', 'service2'])", $before->statement);
+
+        // Test with serviceTags
+        $before = new Before(serviceTags: ['tag1', 'tag2']);
+        $this->assertEquals("('tag1' in serviceTags) || ('tag2' in serviceTags)", $before->statement);
+
+        // Test that the last parameter takes precedence when multiple are provided
+        $before = new Before(
+            classAttribute: 'ClassAttr',
+            parentClasses: ['Parent1']
+        );
+        $this->assertEquals("!class.isFinal() && (('Parent1' in parentClasses))", $before->statement);
     }
 }

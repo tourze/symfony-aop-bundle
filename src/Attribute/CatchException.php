@@ -4,7 +4,7 @@ namespace Tourze\Symfony\Aop\Attribute;
 
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
-#[\Attribute(\Attribute::TARGET_METHOD)]
+#[\Attribute(flags: \Attribute::TARGET_METHOD)]
 class CatchException extends AutoconfigureTag
 {
     public function __construct()

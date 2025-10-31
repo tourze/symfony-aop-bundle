@@ -2,10 +2,15 @@
 
 namespace Tourze\Symfony\Aop\Tests\Attribute;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\Symfony\Aop\Attribute\Advice;
 
-class AdviceTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(Advice::class)]
+final class AdviceTest extends TestCase
 {
     public function testConstructorWithoutParameters(): void
     {
@@ -20,27 +25,29 @@ class AdviceTest extends TestCase
 
     public function testConstructorWithStatement(): void
     {
-        $statement = 'class.getName() === "App\\\\Service\\\\UserService"';
+        $statement = 'class.getName() === "App\\\Service\\\UserService"';
         $advice = new Advice($statement);
         $this->assertEquals($statement, $advice->statement);
     }
 
     public function testConstructorWithClassAttribute(): void
     {
-        $classAttribute = 'App\\Attribute\\MyAttribute';
+        $classAttribute = 'App\Attribute\MyAttribute';
         $advice = new Advice(classAttribute: $classAttribute);
         $this->assertEquals($classAttribute, $advice->classAttribute);
         $actualStatement = $advice->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('count(class.getAttributes(', $actualStatement);
         $this->assertStringContainsString('MyAttribute', $actualStatement);
     }
 
     public function testConstructorWithMethodAttribute(): void
     {
-        $methodAttribute = 'App\\Attribute\\MyAttribute';
+        $methodAttribute = 'App\Attribute\MyAttribute';
         $advice = new Advice(methodAttribute: $methodAttribute);
         $this->assertEquals($methodAttribute, $advice->methodAttribute);
         $actualStatement = $advice->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('count(method.getAttributes(', $actualStatement);
         $this->assertStringContainsString('MyAttribute', $actualStatement);
     }
@@ -83,10 +90,11 @@ class AdviceTest extends TestCase
 
     public function testConstructorWithParentClasses(): void
     {
-        $parentClasses = ['App\\Base\\BaseRepository'];
+        $parentClasses = ['App\Base\BaseRepository'];
         $advice = new Advice(parentClasses: $parentClasses);
         $this->assertEquals($parentClasses, $advice->parentClasses);
         $actualStatement = $advice->statement;
+        $this->assertNotNull($actualStatement);
         $this->assertStringContainsString('!class.isFinal()', $actualStatement);
         $this->assertStringContainsString('BaseRepository', $actualStatement);
     }

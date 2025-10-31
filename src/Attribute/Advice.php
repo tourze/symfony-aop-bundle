@@ -1,31 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\Symfony\Aop\Attribute;
 
-#[\Attribute(\Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
+#[\Attribute(flags: \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class Advice
 {
     public function __construct(
         public ?string $statement = null,
         public ?string $classAttribute = null,
         public ?string $methodAttribute = null,
+        /** @var array<string>|null */
         public ?array $serviceIds = null,
+        /** @var array<string>|null */
         public ?array $serviceTags = null,
+        /** @var array<string>|null */
         public ?array $parentClasses = null,
     ) {
-        if ($this->classAttribute !== null) {
+        if (null !== $this->classAttribute) {
             $this->statement = self::getClassAttributeStatement($this->classAttribute);
         }
-        if ($this->methodAttribute !== null) {
+        if (null !== $this->methodAttribute) {
             $this->statement = self::getMethodAttributeStatement($this->methodAttribute);
         }
-        if ($this->serviceIds !== null) {
+        if (null !== $this->serviceIds) {
             $this->statement = self::getServiceIdStatement($this->serviceIds);
         }
-        if ($this->serviceTags !== null) {
+        if (null !== $this->serviceTags) {
             $this->statement = self::getServiceTagStatement($this->serviceTags);
         }
-        if ($this->parentClasses !== null) {
+        if (null !== $this->parentClasses) {
             $this->statement = self::getParentClassStatement($this->parentClasses);
         }
     }
@@ -33,15 +38,20 @@ class Advice
     private static function getClassAttributeStatement(string $name): string
     {
         $name = str_replace('\\', '\\\\', $name);
-        return "count(class.getAttributes('$name')) > 0";
+
+        return "count(class.getAttributes('{$name}')) > 0";
     }
 
     private static function getMethodAttributeStatement(string $name): string
     {
         $name = str_replace('\\', '\\\\', $name);
-        return "count(method.getAttributes('$name')) > 0";
+
+        return "count(method.getAttributes('{$name}')) > 0";
     }
 
+    /**
+     * @param array<string> $serviceIds
+     */
     private static function getServiceIdStatement(array $serviceIds): string
     {
         // 这里要区分带通配符的情形
@@ -81,18 +91,25 @@ class Advice
             $statements[] = "(serviceId starts with '{$item}')";
         }
 
-        return implode(" || ", $statements);
+        return implode(' || ', $statements);
     }
 
+    /**
+     * @param array<string> $tags
+     */
     private static function getServiceTagStatement(array $tags): string
     {
         $lines = [];
         foreach ($tags as $tag) {
             $lines[] = "('{$tag}' in serviceTags)";
         }
-        return implode(" || ", $lines);
+
+        return implode(' || ', $lines);
     }
 
+    /**
+     * @param array<string> $parentClasses
+     */
     private static function getParentClassStatement(array $parentClasses): string
     {
         $part1 = '!class.isFinal()';
@@ -102,7 +119,8 @@ class Advice
             $name = str_replace('\\', '\\\\', $parentClass);
             $list[] = "('{$name}' in parentClasses)";
         }
-        $part2 = implode(" || ", $list);
+        $part2 = implode(' || ', $list);
+
         return "{$part1} && ({$part2})";
     }
 }

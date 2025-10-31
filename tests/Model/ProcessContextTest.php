@@ -2,35 +2,55 @@
 
 namespace Tourze\Symfony\Aop\Tests\Model;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\Symfony\Aop\Model\ProcessContext;
 
-class ProcessContextTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(ProcessContext::class)]
+final class ProcessContextTest extends TestCase
 {
+    private function clearInstances(): void
+    {
+        // Clear instances between tests using reflection
+        $reflection = new \ReflectionClass(ProcessContext::class);
+        $property = $reflection->getProperty('instances');
+        $property->setAccessible(true);
+        $property->setValue(null, []);
+    }
+
     public function testGetPid(): void
     {
         $context = new ProcessContext(12345);
         $this->assertEquals(12345, $context->getPid());
     }
-    
+
     public function testInstanceCreatesNewInstance(): void
     {
+        $this->clearInstances();
+
         $context = ProcessContext::instance(1000);
 
-        $this->assertInstanceOf(ProcessContext::class, $context);
+        // Test that instance() returns a ProcessContext with the correct PID
         $this->assertEquals(1000, $context->getPid());
     }
-    
+
     public function testInstanceReturnsSameInstanceForSamePid(): void
     {
+        $this->clearInstances();
+
         $context1 = ProcessContext::instance(2000);
         $context2 = ProcessContext::instance(2000);
 
         $this->assertSame($context1, $context2);
     }
-    
+
     public function testInstanceReturnsDifferentInstancesForDifferentPids(): void
     {
+        $this->clearInstances();
+
         $context1 = ProcessContext::instance(3000);
         $context2 = ProcessContext::instance(3001);
 
@@ -38,13 +58,15 @@ class ProcessContextTest extends TestCase
         $this->assertEquals(3000, $context1->getPid());
         $this->assertEquals(3001, $context2->getPid());
     }
-    
+
     public function testMultipleInstancesAreManaged(): void
     {
+        $this->clearInstances();
+
         $contexts = [];
 
         // Create multiple instances
-        for ($i = 5000; $i < 5010; $i++) {
+        for ($i = 5000; $i < 5010; ++$i) {
             $contexts[$i] = ProcessContext::instance($i);
         }
 
@@ -55,33 +77,29 @@ class ProcessContextTest extends TestCase
             $this->assertSame($context, ProcessContext::instance($pid));
         }
     }
-    
+
     public function testNegativePid(): void
     {
+        $this->clearInstances();
+
         $context = ProcessContext::instance(-1);
         $this->assertEquals(-1, $context->getPid());
     }
-    
+
     public function testZeroPid(): void
     {
+        $this->clearInstances();
+
         $context = ProcessContext::instance(0);
         $this->assertEquals(0, $context->getPid());
     }
-    
+
     public function testLargePid(): void
     {
+        $this->clearInstances();
+
         $largePid = PHP_INT_MAX;
         $context = ProcessContext::instance($largePid);
         $this->assertEquals($largePid, $context->getPid());
-    }
-    
-    protected function setUp(): void
-    {
-        parent::setUp();
-        // Clear instances between tests using reflection
-        $reflection = new \ReflectionClass(ProcessContext::class);
-        $property = $reflection->getProperty('instances');
-        $property->setAccessible(true);
-        $property->setValue(null, []);
     }
 }

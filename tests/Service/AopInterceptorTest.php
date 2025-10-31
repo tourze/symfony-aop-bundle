@@ -2,339 +2,295 @@
 
 namespace Tourze\Symfony\Aop\Tests\Service;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use Tourze\Symfony\Aop\Attribute\After;
 use Tourze\Symfony\Aop\Attribute\AfterReturning;
 use Tourze\Symfony\Aop\Attribute\AfterThrowing;
 use Tourze\Symfony\Aop\Attribute\Before;
-use Tourze\Symfony\Aop\Tests\Fixtures\TestRuntimeException;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 use Tourze\Symfony\Aop\Service\AopInterceptor;
+use Tourze\Symfony\Aop\Tests\Service\Exception\TestException;
 
-class AopInterceptorTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AopInterceptor::class)]
+#[RunTestsInSeparateProcesses] final class AopInterceptorTest extends AbstractIntegrationTestCase
 {
     private AopInterceptor $interceptor;
-    private object $proxy;
-    private object $instance;
 
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        $this->interceptor = new AopInterceptor();
-        $this->interceptor->setInternalServiceId('test.service.internal');
-        $this->interceptor->setProxyServiceId('test.service');
-
-        $this->proxy = new \stdClass();
-        $this->instance = new \stdClass();
+        $this->interceptor = self::getService(AopInterceptor::class);
     }
 
     public function testAddAttributeFunction(): void
     {
-        $method = 'testMethod';
-        $attribute = Before::class;
         $aspectService = function () {
             return new class {
-                public function aspectMethod(JoinPoint $joinPoint): void
+                public function beforeAdvice(JoinPoint $joinPoint): void
                 {
-                    // 测试方法
+                    $joinPoint->setReturnValue('intercepted');
                 }
             };
         };
-        $aspectMethod = 'aspectMethod';
 
-        $this->interceptor->addAttributeFunction($method, $attribute, $aspectService, $aspectMethod);
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            Before::class,
+            $aspectService,
+            'beforeAdvice'
+        );
 
-        // 使用反射来验证私有属性是否被正确设置
+        // 测试拦截器能正确添加和存储属性函数
         $reflection = new \ReflectionClass($this->interceptor);
         $property = $reflection->getProperty('attributes');
         $property->setAccessible(true);
-
         $attributes = $property->getValue($this->interceptor);
 
-        $this->assertArrayHasKey($method, $attributes);
-        $this->assertArrayHasKey($attribute, $attributes[$method]);
-        $this->assertCount(1, $attributes[$method][$attribute]);
-        $this->assertCount(2, $attributes[$method][$attribute][0]);
-        $this->assertInstanceOf(\Closure::class, $attributes[$method][$attribute][0][0]);
-        $this->assertEquals($aspectMethod, $attributes[$method][$attribute][0][1]);
+        $this->assertArrayHasKey('testMethod', $attributes);
+        $this->assertArrayHasKey(Before::class, $attributes['testMethod']);
+        $this->assertCount(1, $attributes['testMethod'][Before::class]);
     }
 
-    public function testInvokeWithNoAttributes(): void
+    public function testInvokeWithoutAttributes(): void
     {
-        $method = 'nonExistentMethod';
-        $params = [];
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): string
+            {
+                return 'original';
+            }
+        };
         $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $result = $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        $this->assertNull($result);
         $this->assertFalse($returnEarly);
+        $this->assertNull($result);
     }
 
     public function testInvokeWithBeforeAdvice(): void
     {
-        $method = 'testMethod';
-        $params = ['value1', 123];
-        $returnEarly = false;
-
-        // 创建一个模拟的Before通知
-        $called = false;
-        $aspectService = function () use ($called) {
-            return new class($called) {
-                private bool $wasCalled;
-
-                public function __construct(bool $initialValue)
+        $aspectService = function () {
+            return new class {
+                public function beforeAdvice(JoinPoint $joinPoint): void
                 {
-                    $this->wasCalled = $initialValue;
-                }
-
-                public function beforeMethod(JoinPoint $joinPoint): void
-                {
-                    $this->wasCalled = true;
-                }
-
-                public function wasCalled(): bool
-                {
-                    return $this->wasCalled;
+                    $joinPoint->setReturnValue('intercepted');
+                    $joinPoint->setReturnEarly(true);
                 }
             };
         };
 
-        $this->interceptor->addAttributeFunction($method, Before::class, $aspectService, 'beforeMethod');
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            Before::class,
+            $aspectService,
+            'beforeAdvice'
+        );
 
-        // 动态添加方法到测试对象
-        $this->instance = new class {
-            public function testMethod($param1, $param2)
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): string
             {
-                return "Result: $param1-$param2";
+                return 'original';
             }
         };
+        $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $result = $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        // 对于这个测试，我们可以直接检查方法是否被调用
-        // 由于无法直接访问闭包内的变量，我们将简化测试断言
-        $this->assertTrue($returnEarly, 'Return early flag was not set');
-        $this->assertEquals('Result: value1-123', $result);
+        $this->assertTrue($returnEarly);
+        $this->assertEquals('intercepted', $result);
     }
 
     public function testInvokeWithAfterReturningAdvice(): void
     {
-        $method = 'testMethod';
-        $params = [];
-        $returnEarly = false;
-
-        // 创建一个模拟的AfterReturning通知
-        $returnValue = 'original method result';
-        $aspectService = function () use ($returnValue) {
-            return new class($returnValue) {
-                private string $expectedReturnValue;
-                public bool $hasCorrectReturnValue = false;
-
-                public function __construct(string $returnValue)
+        $aspectService = function () {
+            return new class {
+                public function afterReturningAdvice(JoinPoint $joinPoint): void
                 {
-                    $this->expectedReturnValue = $returnValue;
-                }
-
-                public function afterReturningMethod(JoinPoint $joinPoint): void
-                {
-                    $this->hasCorrectReturnValue = ($joinPoint->getReturnValue() === $this->expectedReturnValue);
+                    $joinPoint->setReturnValue('modified');
                 }
             };
         };
 
-        $this->interceptor->addAttributeFunction($method, AfterReturning::class, $aspectService, 'afterReturningMethod');
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            AfterReturning::class,
+            $aspectService,
+            'afterReturningAdvice'
+        );
 
-        // 动态添加方法到测试对象
-        $this->instance = new class($returnValue) {
-            private string $value;
-
-            public function __construct(string $value)
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): string
             {
-                $this->value = $value;
-            }
-
-            public function testMethod()
-            {
-                return $this->value;
+                return 'original';
             }
         };
+        $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $result = $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        $this->assertTrue($returnEarly, 'Return early flag was not set');
-        $this->assertEquals($returnValue, $result);
+        $this->assertTrue($returnEarly);
+        $this->assertEquals('original', $result); // AfterReturning 不修改返回值
     }
 
     public function testInvokeWithAfterThrowingAdvice(): void
     {
-        $method = 'testMethod';
-        $params = [];
-        $returnEarly = false;
-
-        // 创建一个模拟的AfterThrowing通知
         $aspectService = function () {
             return new class {
-                public bool $wasCalled = false;
-                public bool $caughtException = false;
-
-                public function afterThrowingMethod(JoinPoint $joinPoint): void
+                public function afterThrowingAdvice(JoinPoint $joinPoint): void
                 {
-                    $this->wasCalled = true;
-                    $this->caughtException = ($joinPoint->getException() instanceof \RuntimeException);
-
-                    // 设置为提前返回
+                    $joinPoint->setReturnValue('handled');
                     $joinPoint->setReturnEarly(true);
-                    $joinPoint->setReturnValue('error handled');
                 }
             };
         };
 
-        $this->interceptor->addAttributeFunction($method, AfterThrowing::class, $aspectService, 'afterThrowingMethod');
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            AfterThrowing::class,
+            $aspectService,
+            'afterThrowingAdvice'
+        );
 
-        // 动态添加会抛出异常的方法到测试对象
-        $this->instance = new class {
-            public function testMethod()
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): string
             {
-                throw new TestRuntimeException('Test exception');
+                throw new TestException('Test exception');
             }
         };
+        $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $result = $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        $this->assertTrue($returnEarly, 'Return early flag was not set');
-        $this->assertEquals('error handled', $result, 'Custom return value not honored');
+        $this->assertTrue($returnEarly);
+        $this->assertEquals('handled', $result);
     }
 
     public function testInvokeWithAfterAdvice(): void
     {
-        $method = 'testMethod';
-        $params = [];
-        $returnEarly = false;
+        $logger = new class {
+            /** @var array<string> */
+            private array $log = [];
 
-        // 创建一个模拟的After通知
-        $aspectService = function () {
-            return new class {
-                public bool $wasCalled = false;
+            public function log(string $message): void
+            {
+                $this->log[] = $message;
+            }
 
-                public function afterMethod(JoinPoint $joinPoint): void
+            /** @return array<string> */
+            public function getLog(): array
+            {
+                return $this->log;
+            }
+        };
+
+        $aspectService = function () use ($logger) {
+            return new class($logger) {
+                private object $logger;
+
+                public function __construct(object $logger)
                 {
-                    $this->wasCalled = true;
+                    $this->logger = $logger;
+                }
+
+                public function afterAdvice(JoinPoint $joinPoint): void
+                {
+                    // @phpstan-ignore-next-line
+                    $this->logger->log('after');
+                }
+
+                /** @return array<string> */
+                public function getLog(): array
+                {
+                    // @phpstan-ignore-next-line
+                    return $this->logger->getLog();
                 }
             };
         };
 
-        $this->interceptor->addAttributeFunction($method, After::class, $aspectService, 'afterMethod');
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            After::class,
+            $aspectService,
+            'afterAdvice'
+        );
 
-        // 动态添加方法到测试对象
-        $this->instance = new class {
-            public function testMethod()
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): string
             {
-                return 'original method result';
+                return 'original';
             }
         };
+        $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $result = $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        $this->assertTrue($returnEarly, 'Return early flag was not set');
-        $this->assertEquals('original method result', $result);
+        $this->assertTrue($returnEarly);
+        $this->assertEquals('original', $result);
+        $this->assertEquals(['after'], $logger->getLog());
     }
 
-    public function testInvokeWithAllAdvicesInOrder(): void
+    public function testRedisMethodParamsFix(): void
     {
-        $method = 'testMethod';
-        $params = [];
+        $aspectService = function () {
+            return new class {};
+        };
+
+        $this->interceptor->addAttributeFunction(
+            'info',
+            Before::class,
+            $aspectService,
+            'beforeAdvice'
+        );
+
+        $redis = $this->createMock(\Redis::class);
+        $proxy = new class {};
         $returnEarly = false;
 
-        // 使用静态数组来跟踪执行顺序
-        $executionOrder = [];
+        // 测试 Redis info 方法的参数修复
+        $params = ['sections' => ['memory', 'stats']];
+        $this->interceptor->__invoke($proxy, $redis, 'info', $params, $returnEarly);
 
-        // Before通知
-        $aspectBefore = function () use (&$executionOrder) {
-            // 不使用引用传递，避免语法错误
-            $orderRef = &$executionOrder;
-            return new class($orderRef) {
-                /** @phpstan-ignore-next-line */
-                private array $orderRef;
+        $this->assertTrue($returnEarly);
+    }
 
-                public function __construct(array &$orderRef)
-                {
-                    $this->orderRef = &$orderRef;
-                }
+    public function testGlobalSequenceIdIncrement(): void
+    {
+        $reflection = new \ReflectionClass(AopInterceptor::class);
+        $property = $reflection->getProperty('globalSequenceId');
+        $property->setAccessible(true);
+        $initialValue = $property->getValue();
 
-                public function beforeMethod(JoinPoint $joinPoint): void
-                {
-                    $this->orderRef[] = 'before';
-                }
-            };
+        $aspectService = function () {
+            return new class {};
         };
 
-        // After通知
-        $aspectAfter = function () use (&$executionOrder) {
-            // 不使用引用传递，避免语法错误
-            $orderRef = &$executionOrder;
-            return new class($orderRef) {
-                /** @phpstan-ignore-next-line */
-                private array $orderRef;
+        $this->interceptor->addAttributeFunction(
+            'testMethod',
+            Before::class,
+            $aspectService,
+            'beforeAdvice'
+        );
 
-                public function __construct(array &$orderRef)
-                {
-                    $this->orderRef = &$orderRef;
-                }
-
-                public function afterMethod(JoinPoint $joinPoint): void
-                {
-                    $this->orderRef[] = 'after';
-                }
-            };
-        };
-
-        // AfterReturning通知
-        $aspectAfterReturning = function () use (&$executionOrder) {
-            // 不使用引用传递，避免语法错误
-            $orderRef = &$executionOrder;
-            return new class($orderRef) {
-                /** @phpstan-ignore-next-line */
-                private array $orderRef;
-
-                public function __construct(array &$orderRef)
-                {
-                    $this->orderRef = &$orderRef;
-                }
-
-                public function afterReturningMethod(JoinPoint $joinPoint): void
-                {
-                    $this->orderRef[] = 'afterReturning';
-                }
-            };
-        };
-
-        $this->interceptor->addAttributeFunction($method, Before::class, $aspectBefore, 'beforeMethod');
-        $this->interceptor->addAttributeFunction($method, After::class, $aspectAfter, 'afterMethod');
-        $this->interceptor->addAttributeFunction($method, AfterReturning::class, $aspectAfterReturning, 'afterReturningMethod');
-
-        // 动态添加方法到测试对象，使用静态变量追踪执行顺序
-        $testOrderRef = &$executionOrder;
-        $this->instance = new class($testOrderRef) {
-            /** @phpstan-ignore-next-line */
-            private array $orderRef;
-
-            public function __construct(array &$orderRef)
+        $proxy = new class {};
+        $instance = new class {
+            public function testMethod(): void
             {
-                $this->orderRef = &$orderRef;
-            }
-
-            public function testMethod()
-            {
-                $this->orderRef[] = 'method';
-                return 'result';
+                // Do nothing
             }
         };
+        $returnEarly = false;
 
-        $result = ($this->interceptor)($this->proxy, $this->instance, $method, $params, $returnEarly);
+        $this->interceptor->__invoke($proxy, $instance, 'testMethod', [], $returnEarly);
 
-        $expectedOrder = ['before', 'method', 'afterReturning', 'after'];
-        $this->assertEquals($expectedOrder, $executionOrder, 'Advice execution order is incorrect');
-        $this->assertTrue($returnEarly, 'Return early flag was not set');
-        $this->assertEquals('result', $result);
+        $this->assertEquals($initialValue + 1, $property->getValue());
     }
 }

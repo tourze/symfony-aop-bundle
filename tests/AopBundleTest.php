@@ -1,30 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\Symfony\Aop\Tests;
 
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\Compiler\PassConfig;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractBundleTestCase;
 use Tourze\Symfony\Aop\AopBundle;
-use Tourze\Symfony\Aop\DependencyInjection\Compiler\AopAttributeCompilerPass;
 
-class AopBundleTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(AopBundle::class)]
+#[RunTestsInSeparateProcesses]
+final class AopBundleTest extends AbstractBundleTestCase
 {
-    public function testBundleBuild(): void
-    {
-        $bundle = new AopBundle();
-        /** @var MockObject&ContainerBuilder $containerBuilder */
-        $containerBuilder = $this->createMock(ContainerBuilder::class);
-
-        // 验证是否添加了正确的编译器
-        $containerBuilder->expects($this->once())
-            ->method('addCompilerPass')
-            ->with(
-                $this->isInstanceOf(AopAttributeCompilerPass::class),
-                $this->equalTo(PassConfig::TYPE_BEFORE_REMOVING)
-            );
-
-        $bundle->build($containerBuilder);
-    }
 }

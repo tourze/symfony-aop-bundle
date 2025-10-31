@@ -3,23 +3,27 @@
   "description": "AOP for Symfony Framework",
   "license": "MIT",
   "require": {
-    "php": "^8.1",
     "friendsofphp/proxy-manager-lts": "^1.0.18",
-    "symfony/config": "^6.4",
-    "symfony/console": "^6.4",
-    "symfony/dependency-injection": "^6.4",
-    "symfony/expression-language": "^6.4",
-    "symfony/framework-bundle": "^6.4",
-    "symfony/http-kernel": "^6.4",
-    "symfony/service-contracts": "^3.5",
-    "symfony/stopwatch": "^6.4",
-    "symfony/yaml": "^6.4 || ^7.1",
-    "tourze/arrayable": "0.0.*"
+    "psr/cache": "^2.0 || ^3.0",
+    "symfony/config": "^7.3",
+    "symfony/console": "^7.3",
+    "symfony/dependency-injection": "^7.3",
+    "symfony/expression-language": "^7.3",
+    "symfony/framework-bundle": "^7.3",
+    "symfony/http-kernel": "^7.3",
+    "symfony/service-contracts": "^3.6",
+    "symfony/stopwatch": "^7.3",
+    "symfony/yaml": "^7.3",
+    "tourze/arrayable": "1.*"
   },
   "require-dev": {
-    "maglnet/composer-require-checker": "^4",
     "phpstan/phpstan": "^2.1",
-    "phpunit/phpunit": "^10.0"
+    "phpunit/phpunit": "^11.5",
+    "tourze/phpunit-base": "1.*",
+    "tourze/phpunit-symfony-kernel-test": "0.0.*",
+    "tourze/phpunit-symfony-unit-test": "0.0.*",
+    "tourze/symfony-dependency-service-loader": "0.0.*",
+    "tourze/symfony-testing-framework": "0.0.*"
   },
   "autoload": {
     "psr-4": {

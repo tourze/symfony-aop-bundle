@@ -2,13 +2,20 @@
 
 namespace Tourze\Symfony\Aop\Tests\Model;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tourze\Symfony\Aop\Model\JoinPoint;
 
-class JoinPointTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(JoinPoint::class)]
+final class JoinPointTest extends TestCase
 {
     private JoinPoint $joinPoint;
+
     private \stdClass $proxy;
+
     private \stdClass $instance;
 
     protected function setUp(): void
@@ -88,6 +95,23 @@ class JoinPointTest extends TestCase
         $joinPoint2->setInternalServiceId('test.service');
 
         $this->assertSame($uniqueId, $joinPoint2->getUniqueId());
+    }
+
+    public function testProceed(): void
+    {
+        $instance = new class {
+            public function testMethod(string $arg): string
+            {
+                return 'result_' . $arg;
+            }
+        };
+
+        $this->joinPoint->setInstance($instance);
+        $this->joinPoint->setMethod('testMethod');
+        $this->joinPoint->setParams(['test']);
+
+        $result = $this->joinPoint->proceed();
+        $this->assertEquals('result_test', $result);
     }
 
     public function testToArray(): void

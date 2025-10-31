@@ -19,12 +19,15 @@ class StopwatchAspect
         $this->eventMap = new \WeakMap();
     }
 
+    /**
+     * @var \WeakMap<JoinPoint, StopwatchEvent>
+     */
     private \WeakMap $eventMap;
 
     #[Before(methodAttribute: Stopwatch::class)]
     public function startEvent(JoinPoint $joinPoint): void
     {
-        if ($this->stopwatch === null) {
+        if (null === $this->stopwatch) {
             return;
         }
         $event = $this->stopwatch->start($joinPoint->getMethod(), $joinPoint->getInternalServiceId());
@@ -34,14 +37,14 @@ class StopwatchAspect
     #[After(methodAttribute: Stopwatch::class)]
     public function stopEvent(JoinPoint $joinPoint): void
     {
-        if ($this->stopwatch === null) {
+        if (null === $this->stopwatch) {
             return;
         }
         if (!$this->eventMap->offsetExists($joinPoint)) {
             return;
         }
         $event = $this->eventMap->offsetGet($joinPoint);
-        /** @var StopwatchEvent $event */
+        /* @var StopwatchEvent $event */
         $event->stop();
     }
 }

@@ -3,9 +3,11 @@
 namespace Tourze\Symfony\Aop\Model;
 
 use Tourze\Arrayable\Arrayable;
+use Tourze\Symfony\Aop\Exception\AopException;
 
 /**
  * 参考Spring的AOP实现，有一些调整
+ * @implements Arrayable<string, mixed>
  */
 class JoinPoint implements Arrayable
 {
@@ -47,13 +49,22 @@ class JoinPoint implements Arrayable
         $this->method = $method;
     }
 
+    /**
+     * @var array<mixed>
+     */
     private array $params;
 
+    /**
+     * @return array<mixed>
+     */
     public function getParams(): array
     {
         return $this->params;
     }
 
+    /**
+     * @param array<mixed> $params
+     */
     public function setParams(array $params): void
     {
         $this->params = $params;
@@ -109,20 +120,26 @@ class JoinPoint implements Arrayable
 
     /**
      * 根据服务/方法/参数自动计算一个唯一ID
-     *
-     * @return string
      */
     public function getUniqueId(): string
     {
         $parts = [
             $this->getInternalServiceId(),
-            //get_class($this->getInstance()),
+            // get_class($this->getInstance()),
             $this->getMethod(),
             md5(serialize($this->getParams())),
         ];
         $parts = implode('_', $parts);
+
         // 要过滤一些特殊字符
         return str_replace(['\\', '/', '!', ':', '@', '#', '$', '%', '^', '&', '*', '(', ')', '[', ']', '|', ',', ';', "'", '"'], '_', $parts);
+    }
+
+    private ?\Closure $proceedCallback = null;
+
+    public function setProceedCallback(?\Closure $callback): void
+    {
+        $this->proceedCallback = $callback;
     }
 
     /**
@@ -130,12 +147,27 @@ class JoinPoint implements Arrayable
      */
     public function proceed(): mixed
     {
+        // 如果设置了Around通知的proceed回调，使用它
+        if (null !== $this->proceedCallback) {
+            return ($this->proceedCallback)();
+        }
+
+        // 否则直接执行目标方法
         $object = $this->getInstance();
         $method = $this->getMethod();
         $params = $this->getParams();
-        return call_user_func_array([$object, $method], $params);
+
+        $callable = [$object, $method];
+        if (!is_callable($callable)) {
+            throw new AopException(sprintf('Method %s::%s is not callable', get_class($object), $method));
+        }
+
+        return \call_user_func($callable, ...$params);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [

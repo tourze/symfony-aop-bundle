@@ -3,7 +3,7 @@
 namespace Tourze\Symfony\Aop\Tests\Fixtures;
 
 /**
- * 测试运行时异常，用于测试中的异常处理
+ * 测试用的运行时异常
  */
 class TestRuntimeException extends \RuntimeException
 {

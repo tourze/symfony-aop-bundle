@@ -58,13 +58,22 @@ trait PassTrait
         $this->factoryMethod = $factoryMethod;
     }
 
+    /**
+     * @var array<mixed>|null
+     */
     private ?array $factoryArguments = null;
 
+    /**
+     * @return array<mixed>|null
+     */
     public function getFactoryArguments(): ?array
     {
         return $this->factoryArguments;
     }
 
+    /**
+     * @param array<mixed>|null $factoryArguments
+     */
     public function setFactoryArguments(?array $factoryArguments): void
     {
         $this->factoryArguments = $factoryArguments;
