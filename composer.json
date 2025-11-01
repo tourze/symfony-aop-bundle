@@ -23,7 +23,7 @@
     "tourze/phpunit-base": "1.*",
     "tourze/phpunit-symfony-kernel-test": "1.0.*",
     "tourze/phpunit-symfony-unit-test": "1.*",
-    "tourze/symfony-dependency-service-loader": "1.*"
+    "tourze/symfony-dependency-service-loader": "1.0.*"
   },
   "autoload": {
     "psr-4": {
