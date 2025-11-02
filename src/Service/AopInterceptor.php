@@ -119,7 +119,7 @@ class AopInterceptor
      * @param object $proxy 拦截方法调用的代理对象
      * @param object $instance 代理中包装的实例
      * @param string $method 被调用方法的名称
-     * @param array $params 传递给被拦截方法的参数数组，
+     * @param array<mixed> $params 传递给被拦截方法的参数数组，
      *                            按参数名称索引
      * @param bool $returnEarly 标志位，用于告诉拦截器代理提前返回，
      *                            返回拦截器的返回值而不是执行方法逻辑
@@ -219,6 +219,8 @@ class AopInterceptor
         }
 
         if ('info' === $method && isset($params['sections'])) {
+            assert(is_array($params['sections']));
+
             return $params['sections'];
         }
 

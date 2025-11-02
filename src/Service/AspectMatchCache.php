@@ -51,6 +51,8 @@ class AspectMatchCache
             $item = $this->persistentCache->getItem($key);
             if ($item->isHit()) {
                 $value = $item->get();
+                assert(is_array($value));
+                /** @var array<string, mixed> $value */
                 $this->memoryCache[$key] = $value;
                 ++$this->hits;
 

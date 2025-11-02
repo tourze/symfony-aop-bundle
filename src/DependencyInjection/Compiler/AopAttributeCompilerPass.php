@@ -53,7 +53,14 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @return array<string, array<mixed>>
+     * 收集切面语句
+     *
+     * 结构说明：
+     * - 最外层 key 为表达式语句（如类方法全名或表达式）
+     * - 第二层 key 为 Attribute 类名（实现 AdviceInterface 的具体注解类）
+     * - 最内层为 [serviceId, methodName] 的二元组列表
+     *
+     * @return array<string, array<string, array<array{string, string}>>>
      */
     private function collectAspectStatements(ContainerBuilder $container): array
     {
@@ -84,8 +91,8 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     /**
      * @template T of object
      * @param \ReflectionClass<T> $reflectionClass
-     * @param array<string, array<mixed>> $statements
-     * @return array<string, array<mixed>>
+     * @param array<string, array<string, array<array{string, string}>>> $statements
+     * @return array<string, array<string, array<array{string, string}>>>
      */
     private function processAspectMethods(ContainerBuilder $container, string $serviceId, \ReflectionClass $reflectionClass, array $statements): array
     {
@@ -101,8 +108,8 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     /**
      * @template T of object
      * @param \ReflectionAttribute<T> $attribute
-     * @param array<string, array<mixed>> $statements
-     * @return array<string, array<mixed>>
+     * @param array<string, array<string, array<array{string, string}>>> $statements
+     * @return array<string, array<string, array<array{string, string}>>>
      */
     private function processMethodAttribute(ContainerBuilder $container, string $serviceId, \ReflectionMethod $method, \ReflectionAttribute $attribute, array $statements): array
     {
@@ -134,7 +141,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param array<string, array<mixed>> $statements
+     * @param array<string, array<string, array<array{string, string}>>> $statements
      */
     private function processServiceInterception(ContainerBuilder $container, array $statements): void
     {
@@ -174,7 +181,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param array<string, array<mixed>> $statements
+     * @param array<string, array<string, array<array{string, string}>>> $statements
      */
     private function processService(ContainerBuilder $container, string $serviceId, array $statements, ExpressionLanguage $expressionLanguage): void
     {
@@ -206,7 +213,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
      * @template T of object
      * @param \ReflectionClass<T> $reflectionClass
      * @param array<string> $serviceTags
-     * @param array<string, array<mixed>> $statements
+     * @param array<string, array<string, array<array{string, string}>>> $statements
      */
     private function processServiceMethod(ContainerBuilder $container, string $serviceId, \ReflectionClass $reflectionClass, \ReflectionMethod $method, array $serviceTags, array $statements, ExpressionLanguage $expressionLanguage): void
     {
@@ -242,7 +249,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param array<mixed> $config
+     * @param array<string, array<array{string, string}>> $config
      */
     private function createMethodInterception(ContainerBuilder $container, string $serviceId, \ReflectionMethod $method, array $config): void
     {
@@ -296,7 +303,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param array<mixed> $config
+     * @param array<string, array<array{string, string}>> $config
      */
     private function configureMethodInterception(ContainerBuilder $container, Definition $aopNewService, string $interceptorId, \ReflectionMethod $method, array $config, string $closureId): void
     {
@@ -313,7 +320,7 @@ class AopAttributeCompilerPass implements CompilerPassInterface
     }
 
     /**
-     * @param array<mixed> $config
+     * @param array<string, array<array{string, string}>> $config
      */
     private function addAttributeFunctions(ContainerBuilder $container, string $interceptorId, \ReflectionMethod $method, array $config): void
     {
